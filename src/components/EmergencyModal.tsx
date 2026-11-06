@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { X, PhoneCall, AlertTriangle, ShieldAlert, HeartPulse, Building2, UserCheck } from 'lucide-react';
+import { X, PhoneCall, AlertTriangle, ShieldAlert, HeartPulse, Building2, UserCheck, Activity, ShieldCheck } from 'lucide-react';
 
 interface EmergencyModalProps {
   onClose: () => void;
@@ -11,129 +11,142 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({ onClose }) => {
 
   const emergencyContacts = [
     {
-      title: 'Ambulanza / Emergenza Sanitaria',
-      subtitle: 'Canton Ticino (24/7)',
+      title: 'Centrale Soccorso Sanitario',
+      subtitle: 'Emergenza Ticino (24h)',
       number: '144',
       icon: HeartPulse,
-      color: 'bg-red-50 text-red-600 border-red-200',
-      btnColor: 'bg-red-600 hover:bg-red-700 text-white',
+      color: 'bg-red-50 text-red-700 border-red-100',
+      btnColor: 'bg-red-700 hover:bg-red-800 text-white',
     },
     {
       title: 'Polizia Cantonale',
-      subtitle: 'Emergenza generale',
+      subtitle: 'Ordine e Sicurezza Pubblica',
       number: '117',
       icon: ShieldAlert,
-      color: 'bg-amber-50 text-amber-700 border-amber-200',
-      btnColor: 'bg-amber-600 hover:bg-amber-700 text-white',
+      color: 'bg-slate-50 text-slate-700 border-slate-200',
+      btnColor: 'bg-slate-800 hover:bg-slate-900 text-white',
     },
     {
-      title: 'Spitex Ticino (Assistenza Domiciliare)',
-      subtitle: 'Coordinamento infermieristico',
+      title: 'Servizio Spitex Regionale',
+      subtitle: 'Coordinamento Assistenza',
       number: '+41918255000',
       displayNumber: '+41 91 825 50 00',
       icon: Building2,
-      color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      btnColor: 'bg-[#7BA88A] hover:bg-[#6c987c] text-white',
+      color: 'bg-emerald-50 text-emerald-800 border-emerald-100',
+      btnColor: 'bg-emerald-700 hover:bg-emerald-800 text-white',
     },
     {
-      title: 'Medico Curante (Dr. Rossi)',
-      subtitle: 'Studio medico di famiglia',
+      title: 'Medico di Famiglia (Referente)',
+      subtitle: 'Studio Dr. Rossi',
       number: '+41918001234',
       displayNumber: '+41 91 800 12 34',
       icon: UserCheck,
-      color: 'bg-blue-50 text-blue-700 border-blue-200',
-      btnColor: 'bg-blue-600 hover:bg-blue-700 text-white',
+      color: 'bg-blue-50 text-blue-800 border-blue-100',
+      btnColor: 'bg-blue-700 hover:bg-blue-800 text-white',
     },
     {
-      title: 'Marco (Figlio / Admin)',
-      subtitle: 'Referente principale del cerchio',
+      title: 'Marco (Amministratore Hub)',
+      subtitle: 'Primo Contatto Familiare',
       number: '+41791234567',
       displayNumber: '+41 79 123 45 67',
       icon: PhoneCall,
-      color: 'bg-slate-50 text-slate-700 border-slate-200',
-      btnColor: 'bg-slate-800 hover:bg-slate-900 text-white',
+      color: 'bg-white text-slate-700 border-slate-200',
+      btnColor: 'bg-slate-100 text-slate-900 border-slate-300 hover:bg-slate-200',
     },
   ];
 
   const handleSosBroadcast = () => {
-    const userName = profile?.userName || 'Famigliare';
-    addPost(`🚨 ALLARME SOS EMERGENZA attivato da ${userName}! Richiesto intervento immediato nel cerchio di ${profile?.recipientName || 'Nonna Rosa'}.`, 'note', false);
-    showToast('Allarme SOS inviato a tutti i membri del cerchio!', 'info');
+    const userName = profile?.userName || 'Operatore';
+    addPost(`ATTENZIONE: ALLARME SOS EMERGENZA attivato da ${userName}. È richiesto intervento immediato presso il domicilio di ${profile?.recipientName || 'Rosa Rossi'}. Protocollo di emergenza attivato.`, 'note', false);
+    showToast('PROTOCOLLO SOS: Notifica inviata a tutti i membri del team Hub.', 'info');
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-60 bg-slate-900/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
-      <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto animate-slide-up">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center animate-pulse">
-              <AlertTriangle className="w-6 h-6" />
+    <div className="fixed inset-0 z-60 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white w-full max-w-xl rounded-t-lg sm:rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-200">
+        {/* Corporate Header */}
+        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded bg-red-700 text-white flex items-center justify-center shadow-lg">
+              <AlertTriangle className="w-7 h-7" />
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-slate-900">Contatti di Emergenza SOS</h2>
-              <p className="text-xs text-slate-500">Cura di {profile?.recipientName || 'Nonna Rosa'} • Ticino</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Activity className="w-3.5 h-3.5 text-red-700" />
+                <span className="text-[9px] font-black text-red-800 uppercase tracking-[0.2em]">Emergency Protocol</span>
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">Centro Emergenze</h2>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
+            className="w-10 h-10 rounded border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* SOS Broadcast Banner */}
-        <div className="bg-red-500 text-white rounded-2xl p-4 mb-6 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h3 className="font-bold text-sm">Richiesta Aiuto Urgente</h3>
-            <p className="text-xs text-red-100">Invia una notifica d'emergenza immediata sulla Timeline a tutti i membri del cerchio.</p>
+        <div className="p-8">
+          {/* SOS Broadcast Panel */}
+          <div className="bg-red-700 text-white rounded-lg p-6 mb-10 shadow-xl border border-red-800 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
+              <ShieldAlert className="w-24 h-24" />
+            </div>
+            <div className="relative z-10">
+              <h3 className="font-black text-base uppercase tracking-widest mb-1">Hub Broadcast SOS</h3>
+              <p className="text-xs text-red-100 font-bold opacity-80 uppercase tracking-tight">Invia segnale di emergenza certificato a tutto il team.</p>
+            </div>
+            <button
+              onClick={handleSosBroadcast}
+              className="relative z-10 w-full sm:w-auto px-8 h-12 bg-white text-red-700 font-black uppercase tracking-widest rounded shadow-lg hover:bg-red-50 transition-all active:scale-95 text-xs"
+            >
+              Attiva Protocollo SOS
+            </button>
           </div>
-          <button
-            onClick={handleSosBroadcast}
-            className="w-full sm:w-auto px-5 py-2.5 bg-white text-red-600 font-extrabold rounded-xl text-xs hover:bg-red-50 transition-all shadow-sm whitespace-nowrap active:scale-95"
-          >
-            🚨 Invia SOS Timeline
-          </button>
-        </div>
 
-        {/* Contacts List */}
-        <div className="space-y-3 mb-6">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Numeri rapidi Ticino & Medici</h3>
-          {emergencyContacts.map((contact, idx) => {
-            const Icon = contact.icon;
-            return (
-              <div
-                key={idx}
-                className={`p-4 rounded-2xl border ${contact.color} flex items-center justify-between gap-3 shadow-2xs`}
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-white shadow-xs flex items-center justify-center shrink-0">
-                    <Icon className="w-5 h-5" />
+          {/* Contacts Directory */}
+          <div className="space-y-3">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-1">Directory Telefonica Critica</h3>
+            <div className="grid gap-3">
+              {emergencyContacts.map((contact, idx) => {
+                const Icon = contact.icon;
+                return (
+                  <div
+                    key={idx}
+                    className={`p-5 rounded border transition-all ${contact.color} flex items-center justify-between gap-6 hover:shadow-md group`}
+                  >
+                    <div className="flex items-center gap-5">
+                      <div className="w-12 h-12 rounded bg-white shadow-sm flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-slate-300 transition-all">
+                        <Icon className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight leading-tight mb-1">{contact.title}</h4>
+                        <p className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-1">{contact.subtitle}</p>
+                        <p className="text-sm font-mono font-black text-slate-900">{contact.displayNumber || contact.number}</p>
+                      </div>
+                    </div>
+
+                    <a
+                      href={`tel:${contact.number}`}
+                      className={`h-11 px-6 rounded text-[10px] font-black uppercase tracking-[0.2em] shadow-sm transition-all flex items-center gap-2 whitespace-nowrap ${contact.btnColor}`}
+                    >
+                      <PhoneCall className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Call</span>
+                    </a>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">{contact.title}</h4>
-                    <p className="text-[11px] text-slate-600">{contact.subtitle}</p>
-                    <p className="text-xs font-mono font-bold mt-0.5 text-slate-800">{contact.displayNumber || contact.number}</p>
-                  </div>
-                </div>
+                );
+              })}
+            </div>
+          </div>
 
-                <a
-                  href={`tel:${contact.number}`}
-                  className={`px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-2 whitespace-nowrap ${contact.btnColor}`}
-                >
-                  <PhoneCall className="w-4 h-4" />
-                  <span>Chiama</span>
-                </a>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Footer Note */}
-        <div className="p-3 bg-slate-50 rounded-2xl text-[11px] text-slate-500 text-center">
-          🇨🇭 In caso di pericolo di vita imminente, comporre direttamente il numero unico di soccorso <strong>144</strong>.
+          {/* Security Footer */}
+          <div className="mt-10 p-5 bg-slate-50 rounded border border-slate-100 flex items-center gap-4">
+            <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
+              In caso di pericolo immediato, attivare preventivamente i soccorsi cantonali (144) prima di procedere con il broadcast nell'Hub.
+            </p>
+          </div>
         </div>
       </div>
     </div>

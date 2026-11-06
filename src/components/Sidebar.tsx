@@ -1,73 +1,118 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { MessageSquareText, Calendar, Pill, FileText, BookOpen, Settings, LogOut, Users, HeartHandshake, AlertTriangle, Utensils } from 'lucide-react';
+import { 
+  MessageSquareText, 
+  Calendar, 
+  Pill, 
+  FileText, 
+  BookOpen, 
+  Settings, 
+  LogOut, 
+  Users, 
+  Activity, 
+  AlertTriangle, 
+  Utensils,
+  ChevronRight,
+  ShieldAlert
+} from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 import { EmergencyModal } from './EmergencyModal';
 
 export const Sidebar: React.FC = () => {
-  const { profile, activeTab, setActiveTab, members, logoutCircle } = useApp();
+  const { profile, activeTab, setActiveTab, members, logoutCircle, isSidebarOpen, setIsSidebarOpen } = useApp();
   const [showSettings, setShowSettings] = useState(false);
   const [showEmergency, setShowEmergency] = useState(false);
 
   const tabs = [
-    { id: 'timeline', label: 'Timeline', icon: MessageSquareText },
-    { id: 'calendario', label: 'Calendario', icon: Calendar },
-    { id: 'farmaci', label: 'Farmaci', icon: Pill },
-    { id: 'pasti', label: 'Pasti & Nutrizione', icon: Utensils },
-    { id: 'documenti', label: 'Documenti', icon: FileText },
-    { id: 'guida', label: 'Guida', icon: BookOpen },
+    { id: 'timeline', label: 'Timeline Operativa', icon: MessageSquareText },
+    { id: 'calendario', label: 'Agenda & Visite', icon: Calendar },
+    { id: 'farmaci', label: 'Terapia Farmacologica', icon: Pill },
+    { id: 'pasti', label: 'Nutrizione & Pasti', icon: Utensils },
+    { id: 'documenti', label: 'Archivio Documenti', icon: FileText },
+    { id: 'guida', label: 'Guida Territoriale', icon: BookOpen },
   ];
 
   return (
     <>
-      <aside className="hidden md:flex w-64 fixed inset-y-0 left-0 flex-col bg-white border-r border-slate-200 z-30 shadow-xs">
-        {/* Brand Header */}
-        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#7BA88A]/20 text-[#7BA88A] flex items-center justify-center shrink-0">
-            <HeartHandshake className="w-5 h-5" />
+      {/* Mobile Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar / Drawer */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 shadow-2xl md:shadow-none
+        transform transition-transform duration-300 ease-in-out flex flex-col
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0 md:w-64 md:z-30
+      `}>
+        {/* Corporate Header */}
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0">
+              <Activity className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-sm font-black text-slate-900 tracking-tight leading-none">Cerchio di Cura</h1>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Care Management</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-sm font-bold text-[#2D3748] tracking-tight">Cerchio di Cura</h1>
-            <p className="text-[11px] text-slate-500 truncate max-w-[130px]">Cura di {profile?.recipientName || 'Nonna Rosa'}</p>
-          </div>
+          {/* Mobile Close Button */}
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg"
+          >
+            <LogOut className="w-5 h-5 rotate-180" />
+          </button>
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Navigazione</div>
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          <div className="px-3 pb-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Navigazione</div>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all ${
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-lg text-[13px] font-bold transition-all ${
                   isActive
-                    ? 'bg-[#7BA88A]/15 text-[#7BA88A] font-semibold shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-[#7BA88A]' : 'text-slate-400'}`} />
-                <span>{tab.label}</span>
+                <div className="flex items-center gap-3">
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-700' : 'text-slate-400'}`} />
+                  <span>{tab.label}</span>
+                </div>
+                {isActive && <ChevronRight className="w-3 h-3 text-emerald-400" />}
               </button>
             );
           })}
 
-          <div className="pt-6">
-            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-              <span>Membri del Cerchio</span>
-              <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md text-[10px] font-semibold">{members.length}</span>
+          <div className="pt-8">
+            <div className="px-3 pb-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center justify-between">
+              <span>Team Assistenza</span>
+              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200 text-[9px] font-black">{members.length}</span>
             </div>
-            <div className="space-y-1 mt-1">
+            <div className="space-y-1 mt-2">
               {members.map((m) => (
-                <div key={m.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-slate-700 bg-slate-50/50">
-                  <span className="w-7 h-7 rounded-lg bg-white shadow-2xs flex items-center justify-center text-sm">{m.avatar}</span>
-                  <div className="flex-1 truncate">
-                    <p className="font-semibold text-slate-800 truncate">{m.name}</p>
-                    <p className="text-[10px] text-slate-400 truncate">{m.role}</p>
+                <div key={m.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold text-slate-700 bg-white border border-slate-100 hover:border-slate-200 transition-colors">
+                  <div className="w-7 h-7 rounded bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-600 border border-slate-200">
+                    {m.avatar}
                   </div>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online" />
+                  <div className="flex-1 truncate">
+                    <p className="text-slate-900 truncate leading-none mb-0.5">{m.name}</p>
+                    <p className="text-[10px] text-slate-500 font-medium truncate">{m.role}</p>
+                  </div>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Online" />
                 </div>
               ))}
             </div>
@@ -75,27 +120,36 @@ export const Sidebar: React.FC = () => {
         </nav>
 
         {/* Footer Actions in Sidebar */}
-        <div className="p-4 border-t border-slate-100 space-y-2 bg-slate-50/50">
+        <div className="p-4 border-t border-slate-100 space-y-2 bg-slate-50/80">
           <button
-            onClick={() => setShowEmergency(true)}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-sm transition-all"
+            onClick={() => {
+              setShowEmergency(true);
+              setIsSidebarOpen(false);
+            }}
+            className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg text-xs font-black text-white bg-red-700 hover:bg-red-800 shadow-sm transition-all uppercase tracking-wider"
           >
-            <AlertTriangle className="w-4 h-4" />
+            <ShieldAlert className="w-4 h-4" />
             <span>Emergenza SOS</span>
           </button>
           <button
-            onClick={() => setShowSettings(true)}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-white hover:shadow-2xs transition-all"
+            onClick={() => {
+              setShowSettings(true);
+              setIsSidebarOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-all"
           >
-            <Settings className="w-4 h-4 text-slate-500" />
-            <span>Impostazioni Cerchio</span>
+            <Settings className="w-4 h-4 text-slate-400" />
+            <span>Impostazioni Hub</span>
           </button>
           <button
-            onClick={logoutCircle}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-red-600 hover:bg-red-50 transition-all"
+            onClick={() => {
+              logoutCircle();
+              setIsSidebarOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-bold text-red-700 hover:bg-red-50 transition-all border border-transparent"
           >
-            <LogOut className="w-4 h-4 text-red-500" />
-            <span>Esci dal Cerchio</span>
+            <LogOut className="w-4 h-4 text-red-600" />
+            <span>Esci dalla sessione</span>
           </button>
         </div>
       </aside>
@@ -105,3 +159,4 @@ export const Sidebar: React.FC = () => {
     </>
   );
 };
+

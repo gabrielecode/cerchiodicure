@@ -36,6 +36,8 @@ interface AppContextType {
   removeMember: (id: string) => void;
   updateMeal: (id: string, lunch: MealItem, dinner: MealItem) => void;
   updateDietaryNotes: (notes: string) => void;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (isOpen: boolean) => void;
 }
 
 const INITIAL_PROFILE: Profile = {
@@ -47,16 +49,16 @@ const INITIAL_PROFILE: Profile = {
 };
 
 const INITIAL_MEMBERS: Member[] = [
-  { id: '1', name: 'Marco', role: 'Figlio', avatar: '👨‍💼', online: true },
-  { id: '2', name: 'Giulia', role: 'Figlia', avatar: '👩‍💻', online: true },
-  { id: '3', name: 'Ana', role: 'Badante', avatar: '👩‍⚕️', online: true },
+  { id: '1', name: 'Marco', role: 'Figlio', avatar: 'MA', online: true },
+  { id: '2', name: 'Giulia', role: 'Figlia', avatar: 'GI', online: true },
+  { id: '3', name: 'Ana', role: 'Badante', avatar: 'AN', online: true },
 ];
 
 const INITIAL_POSTS: Post[] = [
   {
     id: 'p1',
     authorName: 'Marco',
-    authorAvatar: '👨‍💼',
+    authorAvatar: 'MA',
     timestamp: '2 ore fa',
     type: 'pill',
     text: 'Ho dato la pastiglia delle 8 regolarmente.',
@@ -65,7 +67,7 @@ const INITIAL_POSTS: Post[] = [
   {
     id: 'p2',
     authorName: 'Giulia',
-    authorAvatar: '👩‍💻',
+    authorAvatar: 'GI',
     timestamp: 'Ieri alle 16:30',
     type: 'calendar',
     text: 'Promemoria: Visita dal cardiologo confermata per mercoledì alle 10:00.',
@@ -74,7 +76,7 @@ const INITIAL_POSTS: Post[] = [
   {
     id: 'p3',
     authorName: 'Marco',
-    authorAvatar: '👨‍💼',
+    authorAvatar: 'MA',
     timestamp: 'Ieri alle 13:15',
     type: 'food',
     text: 'Ha mangiato poco a pranzo, solo un po di passato di verdura.',
@@ -82,7 +84,7 @@ const INITIAL_POSTS: Post[] = [
   {
     id: 'p4',
     authorName: 'Ana',
-    authorAvatar: '👩‍⚕️',
+    authorAvatar: 'AN',
     timestamp: '3 giorni fa',
     type: 'photo',
     text: 'Passeggiata nel giardino di casa con il sole splendido.',
@@ -91,7 +93,7 @@ const INITIAL_POSTS: Post[] = [
   {
     id: 'p5',
     authorName: 'Giulia',
-    authorAvatar: '👩‍💻',
+    authorAvatar: 'GI',
     timestamp: '4 giorni fa',
     type: 'note',
     text: 'La consegna della spesa a domicilio è arrivata puntuale.',
@@ -99,7 +101,7 @@ const INITIAL_POSTS: Post[] = [
   {
     id: 'p6',
     authorName: 'Ana',
-    authorAvatar: '👩‍⚕️',
+    authorAvatar: 'AN',
     timestamp: '5 giorni fa',
     type: 'note',
     text: 'Misurata pressione: 130/80, tutto stabile.',
@@ -139,7 +141,7 @@ const INITIAL_EVENTS: CareEvent[] = [
     date: getTodayStr(),
     time: '09:00',
     memberName: 'Ana',
-    memberAvatar: '👩‍⚕️',
+    memberAvatar: 'AN',
     type: 'appuntamento',
     status: 'completato',
   },
@@ -322,6 +324,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [activeTab, setActiveTab] = useState<string>('timeline');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   useEffect(() => {
@@ -417,7 +420,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Ensure current user is in members
     if (!members.some((m) => m.name.toLowerCase() === userName.toLowerCase())) {
       setMembers((prev) => [
-        { id: Date.now().toString(), name: userName, role: userRole, avatar: '👤', online: true },
+        { id: Date.now().toString(), name: userName, role: userRole, avatar: userName.substring(0, 2).toUpperCase(), online: true },
         ...prev,
       ]);
     }
@@ -555,13 +558,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addMember = (name: string, role: string) => {
-    const avatars = ['🧑', '👩', '👨', '👵', '👴', '👩‍⚕️', '👨‍💼'];
-    const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+    const initials = name.substring(0, 2).toUpperCase();
     const newM: Member = {
       id: Date.now().toString(),
       name,
       role,
-      avatar: randomAvatar,
+      avatar: initials,
       online: true,
     };
     setMembers([...members, newM]);
@@ -622,6 +624,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeMember,
         updateMeal,
         updateDietaryNotes,
+        isSidebarOpen,
+        setIsSidebarOpen,
       }}
     >
       {children}
