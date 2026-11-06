@@ -21,6 +21,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { InstallBanner } from './InstallBanner';
+import heroImage from '../assets/hero.jpg';
 
 export const LandingPage: React.FC = () => {
   const { setCurrentView } = useApp();
@@ -91,70 +92,60 @@ export const LandingPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Professional Hero Section */}
-      <section className="relative overflow-hidden pt-20 pb-24 lg:pt-32 lg:pb-40 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-12 gap-16 items-center">
-            <div className="lg:col-span-7 text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-50 text-emerald-800 text-[11px] font-bold uppercase tracking-wider border border-emerald-100 mb-8">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Piattaforma certificata per l'assistenza domiciliare</span>
-              </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] mb-8">
-                L'assistenza domiciliare, <br />
-                <span className="text-emerald-700">finalmente coordinata.</span>
-              </h1>
-              <p className="text-lg text-slate-600 mb-10 max-w-2xl leading-relaxed">
-                Centralizza la gestione di farmaci, visite e turni di assistenza in un ecosistema digitale professionale. Progettato per le famiglie ticinesi che cercano affidabilità e trasparenza.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <button
-                  onClick={() => setCurrentView('login')}
-                  className="w-full sm:w-auto h-14 bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-10 rounded-lg shadow-sm transition-all flex items-center justify-center gap-3 text-base"
-                >
-                  <span>Inizia ora gratuitamente</span>
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setCurrentView('login')}
-                  className="w-full sm:w-auto h-14 bg-white hover:bg-slate-50 text-slate-900 font-bold px-10 rounded-lg border border-slate-300 transition-all flex items-center justify-center gap-2 text-base"
-                >
-                  <span>Inserisci codice invito</span>
-                </button>
-              </div>
+      {/* Professional Hero Section with Background Watermark */}
+      <section className="relative overflow-hidden pt-24 pb-32 lg:pt-40 lg:pb-52 bg-white flex items-center min-h-[600px] sm:min-h-[700px]">
+        
+        {/* Background Image Layer (Watermark) */}
+        <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center lg:justify-end overflow-hidden">
+          <div className="w-full max-w-5xl lg:max-w-6xl opacity-10 lg:opacity-15 transform scale-110 lg:translate-x-32 transition-opacity duration-1000">
+            <img 
+              src={heroImage} 
+              alt="" 
+              className="w-full h-auto object-contain" 
+              loading="eager"
+            />
+          </div>
+        </div>
 
-              <div className="mt-10 flex items-center gap-8 text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                <span className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> No setup fee
-                </span>
-                <span className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> GDPR Compliant
-                </span>
-              </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-50 text-emerald-800 text-[11px] font-bold uppercase tracking-wider border border-emerald-100 mb-8">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Piattaforma professionale per l'assistenza domiciliare</span>
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.05] mb-8">
+              L'assistenza domiciliare, <br />
+              <span className="text-emerald-700">finalmente coordinata.</span>
+            </h1>
+            
+            <p className="text-lg sm:text-xl text-slate-600 mb-10 max-w-2xl leading-relaxed font-medium">
+              Centralizza la gestione di farmaci, visite e turni di assistenza in un ecosistema digitale professionale. Progettato per le famiglie ticinesi che cercano affidabilità e trasparenza.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <button
+                onClick={() => setCurrentView('login')}
+                className="w-full sm:w-auto h-14 bg-emerald-700 hover:bg-emerald-800 text-white font-black uppercase tracking-widest rounded-lg shadow-xl transition-all flex items-center justify-center gap-3 text-sm px-10"
+              >
+                <span>Attiva ora</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setCurrentView('login')}
+                className="w-full sm:w-auto h-14 bg-white hover:bg-slate-50 text-slate-900 font-black uppercase tracking-widest px-10 rounded-lg border border-slate-300 transition-all flex items-center justify-center gap-2 text-sm"
+              >
+                <span>Accesso Codice</span>
+              </button>
             </div>
 
-            {/* Hero Illustration */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative z-10 rounded-xl overflow-hidden shadow-2xl border border-slate-200 bg-white p-2">
-                <img 
-                  src="/assets/aistudio/Daughter_and_mother_interacting___1fa1ba8c_6308a603.jpg" 
-                  alt="Coordinamento assistenza familiare" 
-                  className="w-full h-auto rounded-lg"
-                />
-              </div>
-              
-              {/* Badge Overlay */}
-              <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-lg shadow-xl border border-slate-200 hidden md:block z-20">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-700 flex items-center justify-center text-white">
-                    <Globe2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-900">Standard Elvetico</p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">100% Data Hosting CH</p>
-                  </div>
-                </div>
-              </div>
+            <div className="mt-12 flex items-center gap-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> No setup fee
+              </span>
+              <span className="flex items-center gap-2 border-l border-slate-200 pl-8">
+                <Globe2 className="w-4 h-4 text-emerald-600" /> Swiss Data Hosting
+              </span>
             </div>
           </div>
         </div>
