@@ -24,23 +24,35 @@ service cloud.firestore {
              data.updatedAt is timestamp;
     }
 
+    function isValidMessage(data) {
+      return data.keys().hasAll(['text', 'senderId', 'senderName', 'createdAt']) &&
+             data.keys().hasOnly(['text', 'senderId', 'senderName', 'createdAt']) &&
+             data.text is string && data.text.size() <= 1000 &&
+             data.senderId is string && data.senderName is string &&
+             data.createdAt is timestamp;
+    }
+
     match /push_tokens/{tokenId} {
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get, list, delete: if isSignedIn();
       allow create: if isSignedIn() && 
                       isValidId(tokenId) && 
                       isValidPushToken(request.resource.data) &&
-                      request.resource.data.userId == request.auth.uid &&
                       request.resource.data.createdAt == request.time &&
                       request.resource.data.updatedAt == request.time;
       allow update: if isSignedIn() && 
                       isValidPushToken(request.resource.data) &&
-                      resource.data.userId == request.auth.uid &&
-                      request.resource.data.userId == request.auth.uid &&
                       request.resource.data.createdAt == resource.data.createdAt &&
                       request.resource.data.updatedAt == request.time &&
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['token', 'updatedAt']);
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /circles/{circleId}/messages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && 
+                      isValidId(circleId) && 
+                      isValidId(messageId) && 
+                      isValidMessage(request.resource.data) &&
+                      request.resource.data.createdAt == request.time;
     }
   }
 }

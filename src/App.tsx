@@ -17,6 +17,7 @@ import { MedicationsTab } from './components/MedicationsTab';
 import { DocumentsTab } from './components/DocumentsTab';
 import { GuidaTab } from './components/GuidaTab';
 import { MealsTab } from './components/MealsTab';
+import { ChatTab } from './components/ChatTab';
 import { HeartHandshake, Sun, Moon } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 
@@ -145,6 +146,7 @@ const MainContent: React.FC = () => {
           {activeTab === 'pasti' && <MealsTab />}
           {activeTab === 'documenti' && <DocumentsTab />}
           {activeTab === 'guida' && <GuidaTab />}
+          {activeTab === 'chat' && <ChatTab />}
         </main>
       </div>
 

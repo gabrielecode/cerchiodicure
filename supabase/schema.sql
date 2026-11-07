@@ -102,7 +102,7 @@ BEGIN
     AND user_id = auth.uid()
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- RPC to join a circle via invite code
 CREATE OR REPLACE FUNCTION join_circle(code TEXT, display_name TEXT, user_role TEXT)
@@ -121,7 +121,7 @@ BEGIN
   ON CONFLICT (circle_id, user_id) DO UPDATE 
   SET display_name = EXCLUDED.display_name, role = EXCLUDED.role;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Trigger to automatically add creator to circle_members
 CREATE OR REPLACE FUNCTION handle_new_circle()
@@ -147,8 +147,9 @@ ALTER TABLE meals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dietary_notes ENABLE ROW LEVEL SECURITY;
 
 -- Circles Policies
-CREATE POLICY "Users can view circles they belong to" 
-ON circles FOR SELECT USING (is_circle_member(id));
+DROP POLICY IF EXISTS "Users can view circles they belong to" ON circles;
+CREATE POLICY "Users can view circles they belong to" ON circles
+FOR SELECT USING (created_by = auth.uid() OR is_circle_member(id));
 
 CREATE POLICY "Authenticated users can create circles" 
 ON circles FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
@@ -160,8 +161,15 @@ ON circles FOR UPDATE USING (is_circle_member(id));
 CREATE POLICY "Members can view other members of the same circle" 
 ON circle_members FOR SELECT USING (is_circle_member(circle_id));
 
-CREATE POLICY "Users can add themselves via RPC (join_circle)" 
-ON circle_members FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can add themselves via RPC (join_circle)" ON circle_members;
+CREATE POLICY "Creator can add self to own circle" ON circle_members
+FOR INSERT WITH CHECK (
+  auth.uid() = user_id
+  AND EXISTS (SELECT 1 FROM circles c WHERE c.id = circle_id AND c.created_by = auth.uid())
+);
+
+CREATE POLICY "Members can remove members or leave" ON circle_members
+FOR DELETE USING (is_circle_member(circle_id));
 
 -- Entity Policies (Shared Pattern)
 -- All members of a circle can SELECT, INSERT, UPDATE, DELETE data in that circle

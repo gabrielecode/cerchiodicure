@@ -26,7 +26,8 @@ export const Sidebar: React.FC = () => {
   const [showEmergency, setShowEmergency] = useState(false);
 
   const tabs = [
-    { id: 'timeline', label: 'Timeline Operativa', icon: MessageSquareText },
+    { id: 'timeline', label: 'Timeline Operativa', icon: Activity },
+    { id: 'chat', label: 'Chat di Gruppo', icon: MessageSquareText },
     { id: 'calendario', label: 'Agenda & Visite', icon: Calendar },
     { id: 'farmaci', label: 'Terapia Farmacologica', icon: Pill },
     { id: 'pasti', label: 'Nutrizione & Pasti', icon: Utensils },

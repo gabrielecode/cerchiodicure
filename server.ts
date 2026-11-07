@@ -20,7 +20,10 @@ async function createServer() {
   app.use(express.json());
 
   const vite = await createViteServer({
-    server: { middlewareMode: true },
+    server: { 
+      middlewareMode: true,
+      allowedHosts: true as true
+    },
     appType: 'spa',
   });
 

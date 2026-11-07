@@ -30,12 +30,47 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A chat message within a circle.",
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The content of the message.",
+          "maxLength": 1000
+        },
+        "senderId": {
+          "type": "string",
+          "description": "The ID of the user who sent the message."
+        },
+        "senderName": {
+          "type": "string",
+          "description": "The name of the user who sent the message."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the message was sent."
+        }
+      },
+      "required": [
+        "text",
+        "senderId",
+        "senderName",
+        "createdAt"
+      ]
     }
   },
   "firestore": {
     "/push_tokens/{tokenId}": {
       "schema": "PushToken",
       "description": "Collection of FCM push tokens indexed by a unique ID."
+    },
+    "/circles/{circleId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Collection of messages within a specific circle."
     }
   }
 }

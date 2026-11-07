@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { MessageSquareText, Calendar, Pill, Utensils, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { MessageSquareText, Calendar, Pill, Activity, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { EmergencyModal } from './EmergencyModal';
 
 export const BottomNav: React.FC = () => {
@@ -8,9 +8,9 @@ export const BottomNav: React.FC = () => {
   const [showEmergency, setShowEmergency] = useState(false);
 
   const tabs = [
-    { id: 'timeline', label: 'Timeline', icon: MessageSquareText },
+    { id: 'timeline', label: 'Timeline', icon: Activity },
+    { id: 'chat', label: 'Chat', icon: MessageSquareText },
     { id: 'farmaci', label: 'Terapia', icon: Pill },
-    { id: 'pasti', label: 'Pasti', icon: Utensils },
     { id: 'calendario', label: 'Agenda', icon: Calendar },
   ];
 
