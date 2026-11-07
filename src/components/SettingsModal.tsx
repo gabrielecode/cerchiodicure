@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, UserPlus, Trash2, Copy, Share2, Crown, LogOut, Check, Shield, Activity, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -8,6 +9,7 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
   const { profile, members, updateProfile, addMember, removeMember, logoutCircle, showToast } = useApp();
+  const { signOut } = useAuth();
   const [recipientNameInput, setRecipientNameInput] = useState(profile?.recipientName || '');
   const [showAddMember, setShowAddMember] = useState(false);
   const [newMemberName, setNewMemberName] = useState('');
@@ -233,8 +235,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
           {/* Session Termination */}
           <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-6">
             <button
-              onClick={() => {
+              onClick={async () => {
                 if (window.confirm('Terminare la sessione corrente e uscire dall\'Hub?')) {
+                  await signOut();
                   logoutCircle();
                   onClose();
                 }

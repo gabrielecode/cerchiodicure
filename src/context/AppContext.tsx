@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import { Post, CareEvent, Medication, CareDocument, Member, Profile, PostType, MealPlan, MealItem } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface ToastMessage {
   id: string;
@@ -22,360 +23,232 @@ interface AppContextType {
   setActiveTab: (tab: string) => void;
   toasts: ToastMessage[];
   showToast: (message: string, type?: 'success' | 'info') => void;
-  createCircle: (recipientName: string, userName: string, userRole: string) => void;
-  joinCircle: (code: string, userName: string, userRole: string) => boolean;
-  logoutCircle: () => void;
-  updateProfile: (recipientName: string) => void;
-  addPost: (text: string, type: PostType, completed?: boolean, imageUrl?: string) => void;
-  addEvent: (event: Omit<CareEvent, 'id'>) => void;
-  toggleEventStatus: (eventId: string) => void;
-  addMedication: (med: Omit<Medication, 'id' | 'checks'>) => void;
-  toggleMedicationDose: (medId: string, timeSlot: string, dateStr?: string) => void;
-  addDocument: (doc: Omit<CareDocument, 'id'>) => void;
-  addMember: (name: string, role: string) => void;
-  removeMember: (id: string) => void;
-  updateMeal: (id: string, lunch: MealItem, dinner: MealItem) => void;
-  updateDietaryNotes: (notes: string) => void;
+  createCircle: (recipientName: string, userName: string, userRole: string) => Promise<void>;
+  joinCircle: (code: string, userName: string, userRole: string) => Promise<boolean>;
+  logoutCircle: () => Promise<void>;
+  updateProfile: (recipientName: string) => Promise<void>;
+  addPost: (text: string, type: PostType, completed?: boolean, imageUrl?: string) => Promise<void>;
+  addEvent: (event: Omit<CareEvent, 'id'>) => Promise<void>;
+  toggleEventStatus: (eventId: string) => Promise<void>;
+  addMedication: (med: Omit<Medication, 'id' | 'checks'>) => Promise<void>;
+  toggleMedicationDose: (medId: string, timeSlot: string, dateStr?: string) => Promise<void>;
+  addDocument: (doc: Omit<CareDocument, 'id'>) => Promise<void>;
+  addMember: (name: string, role: string) => Promise<void>;
+  removeMember: (id: string) => Promise<void>;
+  updateMeal: (id: string, lunch: MealItem, dinner: MealItem) => Promise<void>;
+  updateDietaryNotes: (notes: string) => Promise<void>;
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isOpen: boolean) => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  loading: boolean;
+  circleId: string | null;
 }
-
-const INITIAL_PROFILE: Profile = {
-  recipientName: 'Nonna Rosa',
-  userName: 'Marco',
-  userRole: 'Figlio',
-  inviteCode: 'ROSA42',
-  isOnboarded: false,
-};
-
-const INITIAL_MEMBERS: Member[] = [
-  { id: '1', name: 'Marco', role: 'Figlio', avatar: 'MA', online: true },
-  { id: '2', name: 'Giulia', role: 'Figlia', avatar: 'GI', online: true },
-  { id: '3', name: 'Ana', role: 'Badante', avatar: 'AN', online: true },
-];
-
-const INITIAL_POSTS: Post[] = [
-  {
-    id: 'p1',
-    authorName: 'Marco',
-    authorAvatar: 'MA',
-    timestamp: '2 ore fa',
-    type: 'pill',
-    text: 'Ho dato la pastiglia delle 8 regolarmente.',
-    completed: true,
-  },
-  {
-    id: 'p2',
-    authorName: 'Giulia',
-    authorAvatar: 'GI',
-    timestamp: 'Ieri alle 16:30',
-    type: 'calendar',
-    text: 'Promemoria: Visita dal cardiologo confermata per mercoledì alle 10:00.',
-    completed: true,
-  },
-  {
-    id: 'p3',
-    authorName: 'Marco',
-    authorAvatar: 'MA',
-    timestamp: 'Ieri alle 13:15',
-    type: 'food',
-    text: 'Ha mangiato poco a pranzo, solo un po di passato di verdura.',
-  },
-  {
-    id: 'p4',
-    authorName: 'Ana',
-    authorAvatar: 'AN',
-    timestamp: '3 giorni fa',
-    type: 'photo',
-    text: 'Passeggiata nel giardino di casa con il sole splendido.',
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    id: 'p5',
-    authorName: 'Giulia',
-    authorAvatar: 'GI',
-    timestamp: '4 giorni fa',
-    type: 'note',
-    text: 'La consegna della spesa a domicilio è arrivata puntuale.',
-  },
-  {
-    id: 'p6',
-    authorName: 'Ana',
-    authorAvatar: 'AN',
-    timestamp: '5 giorni fa',
-    type: 'note',
-    text: 'Misurata pressione: 130/80, tutto stabile.',
-  },
-];
-
-// Get today formatted as YYYY-MM-DD
-const getTodayStr = () => {
-  const d = new Date();
-  return d.toISOString().split('T')[0];
-};
-
-const INITIAL_EVENTS: CareEvent[] = [
-  {
-    id: 'e1',
-    title: 'Turno pomeriggio e compagnia',
-    date: getTodayStr(),
-    time: '15:00',
-    memberName: 'Marco',
-    memberAvatar: 'MA',
-    type: 'turno',
-    status: 'completato',
-  },
-  {
-    id: 'e2',
-    title: 'Visita Cardiologo Dr. Rossi',
-    date: getTodayStr(),
-    time: '10:00',
-    memberName: 'Giulia',
-    memberAvatar: 'GI',
-    type: 'appuntamento',
-    status: 'attesa',
-  },
-  {
-    id: 'e3',
-    title: 'Fisioterapia a domicilio',
-    date: getTodayStr(),
-    time: '09:00',
-    memberName: 'Ana',
-    memberAvatar: 'AN',
-    type: 'appuntamento',
-    status: 'completato',
-  },
-  {
-    id: 'e4',
-    title: 'Spesa settimanale e farmacia',
-    date: getTodayStr(),
-    time: '14:30',
-    memberName: 'Marco',
-    memberAvatar: 'MA',
-    type: 'turno',
-    status: 'attesa',
-  },
-  {
-    id: 'e5',
-    title: 'Pranzo domenicale in famiglia',
-    date: getTodayStr(),
-    time: '12:00',
-    memberName: 'Giulia',
-    memberAvatar: 'GI',
-    type: 'appuntamento',
-    status: 'attesa',
-  },
-];
-
-const INITIAL_MEDICATIONS: Medication[] = [
-  {
-    id: 'm1',
-    name: 'Cardioaspirin',
-    dosage: '100mg',
-    times: ['08:00'],
-    responsible: 'Marco',
-    checks: {
-      [`${getTodayStr()}_08:00`]: true,
-    },
-  },
-  {
-    id: 'm2',
-    name: 'Metformina',
-    dosage: '500mg',
-    times: ['08:00', '20:00'],
-    responsible: 'Giulia',
-    checks: {},
-  },
-  {
-    id: 'm3',
-    name: 'Vitamina D',
-    dosage: '1 compressa',
-    times: ['12:00'],
-    responsible: 'Ana',
-    checks: {},
-  },
-];
-
-const INITIAL_DOCUMENTS: CareDocument[] = [
-  {
-    id: 'd1',
-    title: 'Prescrizione cardiologo novembre',
-    date: '02.11.2026',
-    author: 'Giulia',
-    fileSize: '1.2 MB',
-    fileType: 'PDF',
-  },
-  {
-    id: 'd2',
-    title: 'Referto analisi del sangue',
-    date: '28.10.2026',
-    author: 'Marco',
-    fileSize: '2.4 MB',
-    fileType: 'PDF',
-  },
-  {
-    id: 'd3',
-    title: 'Lettera e piano Spitex Ticino',
-    date: '15.10.2026',
-    author: 'Ana',
-    fileSize: '850 KB',
-    fileType: 'PDF',
-  },
-];
-
-const INITIAL_DIETARY_NOTES = `• Diabete tipo 2: Limitare zuccheri raffinati e dolci.
-• Dieta iposodica: Usare poco sale nelle preparazioni.
-• Consistenza: Preferire piatti morbidi o passati di verdura a cena.
-• Preferenze: Adora il minestrone ticinese, la polenta morbida e il pesce bollito. Evitare cibi troppo fritti o pesanti la sera.`;
-
-const INITIAL_MEALS: MealPlan[] = [
-  {
-    id: 'm-lun',
-    day: 'Lunedì',
-    lunch: { dish: 'Minestrone di verdure fresche e petto di tacchino ai ferri', provider: 'Ana (Badante)', status: 'consumato' },
-    dinner: { dish: 'Passato di zucca con crostini e formaggini magri', provider: 'Marco', status: 'pianificato' },
-  },
-  {
-    id: 'm-mar',
-    day: 'Martedì',
-    lunch: { dish: 'Risotto al tiglio con filetti di persico del lago', provider: 'Spitex / P. Senectute', status: 'pianificato' },
-    dinner: { dish: 'Lessoe verdure bollite con olio d’oliva', provider: 'Giulia', status: 'pianificato' },
-  },
-  {
-    id: 'm-mer',
-    day: 'Mercoledì',
-    lunch: { dish: 'Pasta asciutta con pomodoro fresco e basilico', provider: 'Ana (Badante)', status: 'pianificato' },
-    dinner: { dish: 'Vellutata di zucchine e ricotta di capra', provider: 'Marco', status: 'pianificato' },
-  },
-  {
-    id: 'm-gio',
-    day: 'Giovedì',
-    lunch: { dish: 'Polenta morbida con spezzatino di vitello tenero', provider: 'Spitex / P. Senectute', status: 'pianificato' },
-    dinner: { dish: 'Merluzzo al vapore con patate lesse', provider: 'Giulia', status: 'pianificato' },
-  },
-  {
-    id: 'm-ven',
-    day: 'Venerdì',
-    lunch: { dish: 'Minestra di legumi e verdure di stagione', provider: 'Ana (Badante)', status: 'pianificato' },
-    dinner: { dish: 'Frittata morbida alle erbe fini con insalata tenera', provider: 'Marco', status: 'pianificato' },
-  },
-  {
-    id: 'm-sab',
-    day: 'Sabato',
-    lunch: { dish: 'Risotto ai funghi porcini e filetto di branzino', provider: 'Giulia', status: 'pianificato' },
-    dinner: { dish: 'Minestrina in brodo di carne magra', provider: 'Ana (Badante)', status: 'pianificato' },
-  },
-  {
-    id: 'm-dom',
-    day: 'Domenica',
-    lunch: { dish: 'Pranzo domenicale in famiglia: Arrosto morbido con contorno', provider: 'Famiglia', status: 'pianificato' },
-    dinner: { dish: 'Zuppa di verdure leggere e frutta cotta', provider: 'Ana (Badante)', status: 'pianificato' },
-  },
-];
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [profile, setProfile] = useState<Profile | null>(() => {
-    const saved = localStorage.getItem('ccc_profile');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const [currentView, setCurrentView] = useState<'landing' | 'login' | 'app'>(() => {
-    const savedView = localStorage.getItem('ccc_view') as 'landing' | 'login' | 'app';
-    if (savedView) return savedView;
-    const savedProfile = localStorage.getItem('ccc_profile');
-    return savedProfile ? 'app' : 'landing';
-  });
-
-  const [members, setMembers] = useState<Member[]>(() => {
-    const saved = localStorage.getItem('ccc_members');
-    return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
-  });
-
-  const [posts, setPosts] = useState<Post[]>(() => {
-    const saved = localStorage.getItem('ccc_posts');
-    return saved ? JSON.parse(saved) : INITIAL_POSTS;
-  });
-
-  const [events, setEvents] = useState<CareEvent[]>(() => {
-    const saved = localStorage.getItem('ccc_events');
-    return saved ? JSON.parse(saved) : INITIAL_EVENTS;
-  });
-
-  const [medications, setMedications] = useState<Medication[]>(() => {
-    const saved = localStorage.getItem('ccc_medications');
-    return saved ? JSON.parse(saved) : INITIAL_MEDICATIONS;
-  });
-
-  const [documents, setDocuments] = useState<CareDocument[]>(() => {
-    const saved = localStorage.getItem('ccc_documents');
-    return saved ? JSON.parse(saved) : INITIAL_DOCUMENTS;
-  });
-
-  const [meals, setMeals] = useState<MealPlan[]>(() => {
-    const saved = localStorage.getItem('ccc_meals');
-    return saved ? JSON.parse(saved) : INITIAL_MEALS;
-  });
-
-  const [dietaryNotes, setDietaryNotes] = useState<string>(() => {
-    const saved = localStorage.getItem('ccc_dietary');
-    return saved ? saved : INITIAL_DIETARY_NOTES;
-  });
-
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [circleId, setCircleId] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<'landing' | 'login' | 'app'>('landing');
+  const [loading, setLoading] = useState(true);
+  
+  const [members, setMembers] = useState<Member[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [events, setEvents] = useState<CareEvent[]>([]);
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [documents, setDocuments] = useState<CareDocument[]>([]);
+  const [meals, setMeals] = useState<MealPlan[]>([]);
+  const [dietaryNotes, setDietaryNotes] = useState<string>("");
+  
   const [activeTab, setActiveTab] = useState<string>('timeline');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('ccc_theme') as 'light' | 'dark';
-    if (saved) return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  useEffect(() => {
-    if (profile) {
-      localStorage.setItem('ccc_profile', JSON.stringify(profile));
-    } else {
-      localStorage.removeItem('ccc_profile');
+  const showToast = useCallback((message: string, type: 'success' | 'info' = 'success') => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3500);
+  }, []);
+
+  const fetchData = useCallback(async (cid: string) => {
+    setLoading(true);
+    try {
+      const [
+        { data: mData },
+        { data: pData },
+        { data: eData },
+        { data: medData },
+        { data: dData },
+        { data: mealsData },
+        { data: dietData }
+      ] = await Promise.all([
+        supabase.from('circle_members').select('*').eq('circle_id', cid),
+        supabase.from('posts').select('*').eq('circle_id', cid).order('timestamp', { ascending: false }),
+        supabase.from('events').select('*').eq('circle_id', cid).order('date', { ascending: true }),
+        supabase.from('medications').select('*').eq('circle_id', cid),
+        supabase.from('documents').select('*').eq('circle_id', cid).order('date', { ascending: false }),
+        supabase.from('meals').select('*').eq('circle_id', cid),
+        supabase.from('dietary_notes').select('notes').eq('circle_id', cid).maybeSingle()
+      ]);
+
+      if (mData) setMembers(mData.map(m => ({ id: m.user_id, name: m.display_name, role: m.role, avatar: m.display_name.substring(0,2).toUpperCase(), online: true })));
+      if (pData) setPosts(pData.map(p => ({ ...p, timestamp: new Date(p.timestamp).toLocaleString() })));
+      if (eData) setEvents(eData);
+      if (medData) setMedications(medData);
+      if (dData) setDocuments(dData);
+      if (mealsData) setMeals(mealsData);
+      if (dietData) setDietaryNotes(dietData.notes);
+    } catch (err: any) {
+      showToast('Errore nel caricamento dei dati: ' + err.message, 'info');
+    } finally {
+      setLoading(false);
     }
-  }, [profile]);
+  }, [showToast]);
+
+  const migrateLocalStorage = useCallback(async (cid: string) => {
+    const keys = ['ccc_posts', 'ccc_events', 'ccc_medications', 'ccc_documents', 'ccc_meals', 'ccc_dietary'];
+    const hasData = keys.some(k => localStorage.getItem(k));
+    
+    if (hasData && window.confirm("Abbiamo trovato dati salvati localmente. Vuoi importarli in questo Cerchio?")) {
+      try {
+        const posts = JSON.parse(localStorage.getItem('ccc_posts') || '[]');
+        const events = JSON.parse(localStorage.getItem('ccc_events') || '[]');
+        const medications = JSON.parse(localStorage.getItem('ccc_medications') || '[]');
+        const documents = JSON.parse(localStorage.getItem('ccc_documents') || '[]');
+        const meals = JSON.parse(localStorage.getItem('ccc_meals') || '[]');
+        const dietary = localStorage.getItem('ccc_dietary') || "";
+
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (posts.length > 0) {
+          await supabase.from('posts').insert(posts.map((p: any) => ({
+            circle_id: cid,
+            created_by: user?.id,
+            author_name: p.authorName,
+            author_avatar: p.authorAvatar,
+            type: p.type,
+            text: p.text,
+            completed: p.completed,
+            image_url: p.imageUrl
+          })));
+        }
+
+        if (events.length > 0) {
+          await supabase.from('events').insert(events.map((e: any) => ({
+            circle_id: cid,
+            created_by: user?.id,
+            title: e.title,
+            date: e.date,
+            time: e.time,
+            member_name: e.memberName,
+            member_avatar: e.memberAvatar,
+            type: e.type,
+            status: e.status,
+            notes: e.notes
+          })));
+        }
+
+        if (medications.length > 0) {
+          await supabase.from('medications').insert(medications.map((m: any) => ({
+            circle_id: cid,
+            created_by: user?.id,
+            name: m.name,
+            dosage: m.dosage,
+            times: m.times,
+            responsible: m.responsible,
+            checks: m.checks
+          })));
+        }
+
+        if (documents.length > 0) {
+          await supabase.from('documents').insert(documents.map((d: any) => ({
+            circle_id: cid,
+            created_by: user?.id,
+            title: d.title,
+            date: d.date,
+            author: d.author,
+            file_size: d.fileSize,
+            file_type: d.fileType
+          })));
+        }
+
+        if (meals.length > 0) {
+          await supabase.from('meals').insert(meals.map((m: any) => ({
+            circle_id: cid,
+            created_by: user?.id,
+            day: m.day,
+            lunch: m.lunch,
+            dinner: m.dinner
+          })));
+        }
+
+        if (dietary) {
+          await supabase.from('dietary_notes').upsert({ circle_id: cid, notes: dietary, created_by: user?.id });
+        }
+
+        keys.forEach(k => localStorage.removeItem(k));
+        showToast("Migrazione completata con successo!");
+        fetchData(cid);
+      } catch (err: any) {
+        showToast("Errore durante la migrazione: " + err.message, "info");
+      }
+    }
+  }, [fetchData, showToast]);
 
   useEffect(() => {
-    localStorage.setItem('ccc_view', currentView);
-  }, [currentView]);
+    const checkMembership = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setLoading(false);
+        return;
+      }
 
-  useEffect(() => {
-    localStorage.setItem('ccc_members', JSON.stringify(members));
-  }, [members]);
+      const { data: membership, error } = await supabase
+        .from('circle_members')
+        .select('circle_id, display_name, role, circles(recipient_name, invite_code)')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
 
-  useEffect(() => {
-    localStorage.setItem('ccc_posts', JSON.stringify(posts));
-  }, [posts]);
+      if (membership && !error) {
+        const circleData = membership.circles as any;
+        setCircleId(membership.circle_id);
+        setProfile({
+          recipientName: circleData.recipient_name,
+          userName: membership.display_name,
+          userRole: membership.role,
+          inviteCode: circleData.invite_code,
+          isOnboarded: true
+        });
+        setCurrentView('app');
+        fetchData(membership.circle_id);
+        migrateLocalStorage(membership.circle_id);
+      } else {
+        setLoading(false);
+        if (currentView !== 'login') setCurrentView('login');
+      }
+    };
 
-  useEffect(() => {
-    localStorage.setItem('ccc_events', JSON.stringify(events));
-  }, [events]);
+    checkMembership();
 
-  useEffect(() => {
-    localStorage.setItem('ccc_medications', JSON.stringify(medications));
-  }, [medications]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        checkMembership();
+      } else if (event === 'SIGNED_OUT') {
+        setProfile(null);
+        setCircleId(null);
+        setCurrentView('landing');
+        setLoading(false);
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem('ccc_documents', JSON.stringify(documents));
-  }, [documents]);
+    return () => subscription.unsubscribe();
+  }, [fetchData, migrateLocalStorage]);
 
-  useEffect(() => {
-    localStorage.setItem('ccc_meals', JSON.stringify(meals));
-  }, [meals]);
-
-  useEffect(() => {
-    localStorage.setItem('ccc_dietary', dietaryNotes);
-  }, [dietaryNotes]);
-
-  useEffect(() => {
-    localStorage.setItem('ccc_theme', theme);
+  useLayoutEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -383,271 +256,148 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [theme]);
 
-  // Medication Push Notification Watcher (mocked with toasts)
-  useEffect(() => {
-    const checkMedicationTimes = () => {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const currentTimeStr = `${hours}:${minutes}`;
-      const todayStr = now.toISOString().split('T')[0];
+  const toggleTheme = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
 
-      medications.forEach((med) => {
-        med.times.forEach((slot) => {
-          if (slot === currentTimeStr) {
-            const key = `${todayStr}_${slot}`;
-            const isTaken = !!med.checks[key];
-            const notificationKey = `ccc_notified_${med.id}_${key}`;
-
-            if (!isTaken && !localStorage.getItem(notificationKey)) {
-              localStorage.setItem(notificationKey, 'true');
-              showToast(
-                `⏰ NOTIFICA PUSH TERAPIA: È l'ora di somministrare ${med.name} (${med.dosage}) a ${profile?.recipientName || 'Nonna Rosa'}! (Responsabile: ${med.responsible})`,
-                'info'
-              );
-            }
-          }
-        });
-      });
-    };
-
-    const interval = setInterval(checkMedicationTimes, 20000);
-    return () => clearInterval(interval);
-  }, [medications, profile]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  const logoutCircle = async () => {
+    await supabase.auth.signOut();
   };
 
-  const showToast = (message: string, type: 'success' | 'info' = 'success') => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3500);
-  };
-
-  const createCircle = (recipientName: string, userName: string, userRole: string) => {
-    const newProfile: Profile = {
-      recipientName,
-      userName,
-      userRole,
-      inviteCode: 'ROSA' + Math.floor(10 + Math.random() * 90),
-      isOnboarded: true,
-    };
-    setProfile(newProfile);
-    setCurrentView('app');
-    // Ensure current user is in members
-    if (!members.some((m) => m.name.toLowerCase() === userName.toLowerCase())) {
-      setMembers((prev) => [
-        { id: Date.now().toString(), name: userName, role: userRole, avatar: userName.substring(0, 2).toUpperCase(), online: true },
-        ...prev,
-      ]);
+  const createCircle = async (recipientName: string, userName: string, userRole: string) => {
+    try {
+      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const { data: circle, error: circleError } = await supabase.from('circles').insert([{ recipient_name: recipientName, invite_code: inviteCode }]).select().single();
+      if (circleError) throw circleError;
+      const { error: memberError } = await supabase.from('circle_members').insert([{ circle_id: circle.id, user_id: (await supabase.auth.getUser()).data.user?.id, display_name: userName, role: userRole }]);
+      if (memberError) throw memberError;
+      
+      setCircleId(circle.id);
+      setProfile({ recipientName, userName, userRole, inviteCode, isOnboarded: true });
+      setCurrentView('app');
+      showToast(`Cerchio creato con successo!`);
+      fetchData(circle.id);
+    } catch (error: any) {
+      showToast(error.message, 'info');
     }
-    showToast(`Cerchio per ${recipientName} creato con successo!`);
   };
 
-  const joinCircle = (code: string, userName: string, userRole: string): boolean => {
-    if (!code || code.trim().length < 4) {
-      showToast('Codice invito non valido', 'info');
+  const joinCircle = async (code: string, userName: string, userRole: string): Promise<boolean> => {
+    try {
+      const { error: rpcError } = await supabase.rpc('join_circle', { code: code.toUpperCase(), display_name: userName, user_role: userRole });
+      if (rpcError) throw rpcError;
+      const { data: circle, error: circleError } = await supabase.from('circles').select('id, recipient_name, invite_code').eq('invite_code', code.toUpperCase()).single();
+      if (circleError) throw circleError;
+
+      setCircleId(circle.id);
+      setProfile({ recipientName: circle.recipient_name, userName, userRole, inviteCode: circle.invite_code, isOnboarded: true });
+      setCurrentView('app');
+      showToast(`Ti sei unito al cerchio!`);
+      fetchData(circle.id);
+      return true;
+    } catch (error: any) {
+      showToast(error.message || 'Errore durante l\'accesso', 'info');
       return false;
     }
-    const newProfile: Profile = {
-      recipientName: 'Nonna Rosa',
-      userName,
-      userRole,
-      inviteCode: code.toUpperCase(),
-      isOnboarded: true,
-    };
-    setProfile(newProfile);
-    setCurrentView('app');
-    if (!members.some((m) => m.name.toLowerCase() === userName.toLowerCase())) {
-      setMembers((prev) => [
-        { id: Date.now().toString(), name: userName, role: userRole, avatar: '👤', online: true },
-        ...prev,
-      ]);
-    }
-    showToast(`Ti sei unito al cerchio con successo!`);
-    return true;
   };
 
-  const logoutCircle = () => {
-    setProfile(null);
-    localStorage.removeItem('ccc_profile');
-    localStorage.removeItem('ccc_view');
-    setCurrentView('landing');
-    showToast('Uscito dal cerchio', 'info');
-  };
-
-  const updateProfile = (recipientName: string) => {
-    if (profile) {
-      setProfile({ ...profile, recipientName });
-      showToast('Nome del caro aggiornato');
+  const updateProfile = async (recipientName: string) => {
+    if (!circleId) return;
+    const { error } = await supabase.from('circles').update({ recipient_name: recipientName }).eq('id', circleId);
+    if (error) showToast(error.message, 'info');
+    else {
+      setProfile(p => p ? { ...p, recipientName } : null);
+      showToast('Profilo aggiornato');
     }
   };
 
-  const addPost = (text: string, type: PostType, completed?: boolean, imageUrl?: string) => {
-    const author = profile?.userName || 'Marco';
-    const memberObj = members.find((m) => m.name.toLowerCase() === author.toLowerCase());
-    const newPost: Post = {
-      id: Date.now().toString(),
-      authorName: author,
-      authorAvatar: memberObj?.avatar || '👤',
-      timestamp: 'Proprio ora',
-      type,
-      text,
-      completed,
-      imageUrl,
-    };
-    setPosts([newPost, ...posts]);
-    showToast('Aggiornamento pubblicato nella Timeline');
+  const addPost = async (text: string, type: PostType, completed?: boolean, imageUrl?: string) => {
+    if (!circleId) return;
+    const { error } = await supabase.from('posts').insert([{ 
+      circle_id: circleId, 
+      author_name: profile?.userName, 
+      type, text, completed, image_url: imageUrl 
+    }]);
+    if (error) showToast(error.message, 'info');
+    else fetchData(circleId);
   };
 
-  const addEvent = (eventData: Omit<CareEvent, 'id'>) => {
-    const newEvent: CareEvent = {
-      ...eventData,
-      id: Date.now().toString(),
-    };
-    setEvents([newEvent, ...events]);
-    showToast('Nuovo evento aggiunto al calendario');
+  const addEvent = async (eventData: Omit<CareEvent, 'id'>) => {
+    if (!circleId) return;
+    const { error } = await supabase.from('events').insert([{ ...eventData, circle_id: circleId }]);
+    if (error) showToast(error.message, 'info');
+    else fetchData(circleId);
   };
 
-  const toggleEventStatus = (eventId: string) => {
-    setEvents(
-      events.map((ev) => {
-        if (ev.id === eventId) {
-          const nextStatus = ev.status === 'completato' ? 'attesa' : 'completato';
-          showToast(`Evento segnato come ${nextStatus}`);
-          return { ...ev, status: nextStatus };
-        }
-        return ev;
-      })
-    );
+  const toggleEventStatus = async (eventId: string) => {
+    if (!circleId) return;
+    const event = events.find(e => e.id === eventId);
+    if (!event) return;
+    const nextStatus = event.status === 'completato' ? 'attesa' : 'completato';
+    const { error } = await supabase.from('events').update({ status: nextStatus }).eq('id', eventId);
+    if (error) showToast(error.message, 'info');
+    else fetchData(circleId);
   };
 
-  const addMedication = (medData: Omit<Medication, 'id' | 'checks'>) => {
-    const newMed: Medication = {
-      ...medData,
-      id: Date.now().toString(),
-      checks: {},
-    };
-    setMedications([...medications, newMed]);
-    showToast('Farmaco aggiunto con successo');
+  const addMedication = async (medData: Omit<Medication, 'id' | 'checks'>) => {
+    if (!circleId) return;
+    const { error } = await supabase.from('medications').insert([{ ...medData, circle_id: circleId }]);
+    if (error) showToast(error.message, 'info');
+    else fetchData(circleId);
   };
 
-  const toggleMedicationDose = (medId: string, timeSlot: string, dateStr: string = getTodayStr()) => {
-    const key = `${dateStr}_${timeSlot}`;
-    const med = medications.find((m) => m.id === medId);
+  const toggleMedicationDose = async (medId: string, timeSlot: string, dateStr: string = new Date().toISOString().split('T')[0]) => {
+    if (!circleId) return;
+    const med = medications.find(m => m.id === medId);
     if (!med) return;
-
-    const currentVal = !!med.checks[key];
-    const nextVal = !currentVal;
-
-    setMedications(
-      medications.map((m) => {
-        if (m.id === medId) {
-          return {
-            ...m,
-            checks: {
-              ...m.checks,
-              [key]: nextVal,
-            },
-          };
-        }
-        return m;
-      })
-    );
-
-    const userName = profile?.userName || 'Marco';
-    if (nextVal) {
-      showToast(`Dose ${timeSlot} di ${med.name} registrata da ${userName}`);
-      // Also automatically post to Timeline!
-      addPost(`Ha preso la dose di ${med.name} (${med.dosage}) delle ore ${timeSlot}.`, 'pill', true);
-    } else {
-      showToast(`Registrazione ${timeSlot} di ${med.name} rimossa`, 'info');
+    const key = `${dateStr}_${timeSlot}`;
+    const nextChecks = { ...med.checks, [key]: !med.checks[key] };
+    const { error } = await supabase.from('medications').update({ checks: nextChecks }).eq('id', medId);
+    if (error) showToast(error.message, 'info');
+    else {
+      if (nextChecks[key]) addPost(`Ha preso la dose delle ore ${timeSlot}.`, 'pill', true);
+      fetchData(circleId);
     }
   };
 
-  const addDocument = (docData: Omit<CareDocument, 'id'>) => {
-    const newDoc: CareDocument = {
-      ...docData,
-      id: Date.now().toString(),
-    };
-    setDocuments([newDoc, ...documents]);
-    showToast('Documento caricato con successo');
+  const addDocument = async (docData: Omit<CareDocument, 'id'>) => {
+    if (!circleId) return;
+    const { error } = await supabase.from('documents').insert([{ ...docData, circle_id: circleId }]);
+    if (error) showToast(error.message, 'info');
+    else fetchData(circleId);
   };
 
-  const addMember = (name: string, role: string) => {
-    const initials = name.substring(0, 2).toUpperCase();
-    const newM: Member = {
-      id: Date.now().toString(),
-      name,
-      role,
-      avatar: initials,
-      online: true,
-    };
-    setMembers([...members, newM]);
-    showToast(`Membro ${name} aggiunto al cerchio`);
+  const addMember = async (name: string, role: string) => {
+    showToast("Usa il codice invito per aggiungere nuovi membri.", "info");
   };
 
-  const removeMember = (id: string) => {
-    const m = members.find((item) => item.id === id);
-    setMembers(members.filter((item) => item.id !== id));
-    showToast(`Membro ${m?.name || ''} rimosso dal cerchio`, 'info');
+  const removeMember = async (id: string) => {
+    if (!circleId) return;
+    const { error } = await supabase.from('circle_members').delete().eq('circle_id', circleId).eq('user_id', id);
+    if (error) showToast(error.message, 'info');
+    else fetchData(circleId);
   };
 
-  const updateMeal = (id: string, lunch: MealItem, dinner: MealItem) => {
-    setMeals(
-      meals.map((m) => {
-        if (m.id === id) {
-          return { ...m, lunch, dinner };
-        }
-        return m;
-      })
-    );
-    showToast('Piano pasti aggiornato');
+  const updateMeal = async (id: string, lunch: MealItem, dinner: MealItem) => {
+    if (!circleId) return;
+    const { error } = await supabase.from('meals').update({ lunch, dinner }).eq('id', id);
+    if (error) showToast(error.message, 'info');
+    else fetchData(circleId);
   };
 
-  const updateDietaryNotes = (notes: string) => {
-    setDietaryNotes(notes);
-    showToast('Restrizioni e preferenze alimentari aggiornate');
+  const updateDietaryNotes = async (notes: string) => {
+    if (!circleId) return;
+    const { error } = await supabase.from('dietary_notes').upsert({ circle_id: circleId, notes });
+    if (error) showToast(error.message, 'info');
+    else fetchData(circleId);
   };
 
   return (
     <AppContext.Provider
       value={{
-        profile,
-        currentView,
-        setCurrentView,
-        members,
-        posts,
-        events,
-        medications,
-        documents,
-        meals,
-        dietaryNotes,
-        activeTab,
-        setActiveTab,
-        toasts,
-        showToast,
-        createCircle,
-        joinCircle,
-        logoutCircle,
-        updateProfile,
-        addPost,
-        addEvent,
-        toggleEventStatus,
-        addMedication,
-        toggleMedicationDose,
-        addDocument,
-        addMember,
-        removeMember,
-        updateMeal,
-        updateDietaryNotes,
-        isSidebarOpen,
-        setIsSidebarOpen,
-        theme,
-        toggleTheme,
+        profile, currentView, setCurrentView, members, posts, events, medications, documents, meals, dietaryNotes,
+        activeTab, setActiveTab, toasts, showToast, createCircle, joinCircle, logoutCircle, updateProfile,
+        addPost, addEvent, toggleEventStatus, addMedication, toggleMedicationDose, addDocument, addMember,
+        removeMember, updateMeal, updateDietaryNotes, isSidebarOpen, setIsSidebarOpen, theme, toggleTheme,
+        loading, circleId
       }}
     >
       {children}

@@ -18,6 +18,7 @@ import { DocumentsTab } from './components/DocumentsTab';
 import { GuidaTab } from './components/GuidaTab';
 import { MealsTab } from './components/MealsTab';
 import { HeartHandshake, Sun, Moon } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
 
 const MainContent: React.FC = () => {
   const { 
@@ -29,14 +30,26 @@ const MainContent: React.FC = () => {
     setIsSidebarOpen, 
     logoutCircle,
     theme,
-    toggleTheme
+    toggleTheme,
+    loading: appLoading
   } = useApp();
+
+  const { session, loading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+      <div className="animate-pulse flex flex-col items-center gap-4">
+        <HeartHandshake className="w-12 h-12 text-emerald-700 opacity-20" />
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Certificazione Sessione...</span>
+      </div>
+    </div>;
+  }
 
   if (currentView === 'landing') {
     return <LandingPage />;
   }
 
-  if (currentView === 'login') {
+  if (currentView === 'login' || !session) {
     return <Login />;
   }
 
@@ -45,7 +58,7 @@ const MainContent: React.FC = () => {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#E8F0FE] dark:bg-slate-950 flex flex-col relative overflow-x-hidden transition-colors duration-300">
+    <div className="flex-1 flex flex-col relative overflow-x-hidden">
       <InstallBanner />
       
       {/* Mobile Header with Hamburger Menu and Dropdown */}
