@@ -2,5 +2,7 @@
   "name": "Cerchio di Cura",
   "description": "Coordina l'assistenza familiare per anziani non autosufficienti in Ticino",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

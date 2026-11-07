@@ -67,7 +67,16 @@ const MainContent: React.FC = () => {
           </div>
         </div>
         
-        <div className="relative group">
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={toggleTheme}
+            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            title="Toggle theme"
+          >
+            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+          </button>
+
+          <div className="relative group">
           <button 
             className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
           >
@@ -109,7 +118,8 @@ const MainContent: React.FC = () => {
             </button>
           </div>
         </div>
-      </header>
+      </div>
+    </header>
 
       <Sidebar />
 

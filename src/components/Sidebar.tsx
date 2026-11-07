@@ -13,13 +13,15 @@ import {
   AlertTriangle, 
   Utensils,
   ChevronRight,
-  ShieldAlert
+  ShieldAlert,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 import { EmergencyModal } from './EmergencyModal';
 
 export const Sidebar: React.FC = () => {
-  const { profile, activeTab, setActiveTab, members, logoutCircle, isSidebarOpen, setIsSidebarOpen } = useApp();
+  const { profile, activeTab, setActiveTab, members, logoutCircle, isSidebarOpen, setIsSidebarOpen, theme, toggleTheme } = useApp();
   const [showSettings, setShowSettings] = useState(false);
   const [showEmergency, setShowEmergency] = useState(false);
 
@@ -130,6 +132,13 @@ export const Sidebar: React.FC = () => {
           >
             <ShieldAlert className="w-4 h-4" />
             <span>Emergenza SOS</span>
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+          >
+            {theme === 'light' ? <Moon className="w-4 h-4 text-slate-400 dark:text-slate-500" /> : <Sun className="w-4 h-4 text-slate-400 dark:text-slate-500" />}
+            <span>{theme === 'light' ? 'Modalità Scura' : 'Modalità Chiara'}</span>
           </button>
           <button
             onClick={() => {

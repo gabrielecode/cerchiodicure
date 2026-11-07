@@ -18,13 +18,14 @@ import {
   Activity,
   User,
   Clock,
-  Briefcase
+  Briefcase,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { InstallBanner } from './InstallBanner';
-import heroImage from '../assets/hero.jpg';
 
 export const LandingPage: React.FC = () => {
-  const { setCurrentView } = useApp();
+  const { setCurrentView, theme, toggleTheme } = useApp();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const faqs = [
@@ -75,6 +76,13 @@ export const LandingPage: React.FC = () => {
           </nav>
 
           <div className="flex items-center gap-3">
+            <button 
+              onClick={toggleTheme}
+              className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              title="Toggle theme"
+            >
+              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </button>
             <button
               onClick={() => setCurrentView('login')}
               className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 px-4 py-2 transition-colors"
@@ -97,10 +105,10 @@ export const LandingPage: React.FC = () => {
         
         {/* Background Image Layer (Watermark) */}
         <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center lg:justify-end overflow-hidden">
-          <div className="w-full max-w-5xl lg:max-w-6xl opacity-50 dark:opacity-30 transform scale-110 lg:translate-x-32 transition-opacity duration-1000">
+          <div className="w-full max-w-5xl lg:max-w-6xl opacity-50 dark:opacity-40 transform scale-110 lg:translate-x-32 transition-opacity duration-1000">
             <img 
-              src={heroImage} 
-              alt="" 
+              src="/assets/aistudio/Daughter_and_mother_interacting___1fa1ba8c_6308a603.jpg" 
+              alt="Caregiver and patient" 
               className="w-full h-auto object-contain" 
               loading="eager"
             />

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Activity, ArrowRight, KeyRound, ArrowLeft, User, ShieldCheck } from 'lucide-react';
+import { Activity, ArrowRight, KeyRound, ArrowLeft, User, ShieldCheck, Moon, Sun } from 'lucide-react';
 
 export const Login: React.FC = () => {
-  const { createCircle, joinCircle, setCurrentView, showToast } = useApp();
+  const { createCircle, joinCircle, setCurrentView, showToast, theme, toggleTheme } = useApp();
   const [mode, setMode] = useState<'create' | 'join'>('create');
   const [userName, setUserName] = useState('Marco');
   const [recipientName, setRecipientName] = useState('Rosa Rossi');
@@ -39,13 +39,20 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between p-4 sm:p-6 lg:p-8 font-sans text-slate-700 dark:text-slate-300 transition-colors duration-300">
       {/* Top back button */}
-      <div className="max-w-md mx-auto w-full pt-4">
+      <div className="max-w-md mx-auto w-full pt-4 flex items-center justify-between">
         <button
           onClick={() => setCurrentView('landing')}
           className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors bg-white dark:bg-slate-900 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm"
         >
           <ArrowLeft className="w-3 h-3" />
           <span>Portale Pubblico</span>
+        </button>
+        <button 
+          onClick={toggleTheme}
+          className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-900 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-all shadow-sm"
+          title="Toggle theme"
+        >
+          {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
         </button>
       </div>
 
