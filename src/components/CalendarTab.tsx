@@ -66,14 +66,14 @@ export const CalendarTab: React.FC = () => {
   const filteredEvents = events.filter((ev) => ev.date === selectedDate);
 
   return (
-    <div className="w-full px-4 md:px-8 py-8 pb-24 md:pb-12 font-sans bg-slate-50 min-h-screen">
-      <header className="mb-8 bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex items-center justify-between">
+    <div className="w-full px-4 md:px-8 py-8 pb-24 md:pb-12 font-sans bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300">
+      <header className="mb-8 bg-white dark:bg-slate-900 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Activity className="w-4 h-4 text-emerald-700" />
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Schedulazione Hub</span>
+            <Activity className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Schedulazione Hub</span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">Agenda Integrata</h1>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none">Agenda Integrata</h1>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -86,7 +86,7 @@ export const CalendarTab: React.FC = () => {
       </header>
 
       {/* Corporate Week Scroller */}
-      <div className="grid grid-cols-7 gap-2 mb-8 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+      <div className="grid grid-cols-7 gap-2 mb-8 bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800">
         {weekDays.map((d) => {
           const isSelected = selectedDate === d.dateStr;
           return (
@@ -97,8 +97,8 @@ export const CalendarTab: React.FC = () => {
                 isSelected
                   ? 'bg-emerald-700 border-emerald-800 text-white shadow-md'
                   : d.isToday
-                  ? 'bg-emerald-50 border-emerald-100 text-emerald-800 font-black'
-                  : 'bg-slate-50 border-slate-100 text-slate-500 hover:bg-slate-100'
+                  ? 'bg-emerald-50 dark:bg-emerald-900/40 border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 font-black'
+                  : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
               }`}
             >
               <span className="text-[9px] font-black tracking-widest mb-1">{d.name}</span>
@@ -110,15 +110,15 @@ export const CalendarTab: React.FC = () => {
 
       {/* Events List for Selected Date */}
       <div className="space-y-4">
-        <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1 border-l-2 border-emerald-700 pl-3">
+        <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] px-1 border-l-2 border-emerald-700 pl-3">
           Pianificazione per il {selectedDate.split('-').reverse().join('/')}
         </h2>
 
         {filteredEvents.length === 0 ? (
-          <div className="bg-white rounded-lg p-12 text-center border border-slate-200 border-dashed shadow-sm">
-            <CalendarIcon className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-            <p className="text-sm font-black text-slate-800 uppercase tracking-tight">Nessuna attività programmata</p>
-            <p className="text-xs text-slate-400 mt-2 font-medium">Il calendario per questa data è attualmente vuoto.</p>
+          <div className="bg-white dark:bg-slate-900 rounded-lg p-12 text-center border border-slate-200 dark:border-slate-800 border-dashed shadow-sm">
+            <CalendarIcon className="w-12 h-12 text-slate-200 dark:text-slate-800 mx-auto mb-4" />
+            <p className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Nessuna attività programmata</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 font-medium">Il calendario per questa data è attualmente vuoto.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -126,8 +126,8 @@ export const CalendarTab: React.FC = () => {
               <div
                 key={ev.id}
                 onClick={() => setSelectedEvent(ev)}
-                className={`bg-white rounded-lg p-5 shadow-sm border transition-all cursor-pointer hover:border-emerald-300 ${
-                  ev.status === 'completato' ? 'border-emerald-200 bg-emerald-50/10' : 'border-slate-200'
+                className={`bg-white dark:bg-slate-900 rounded-lg p-5 shadow-sm border transition-all cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 ${
+                  ev.status === 'completato' ? 'border-emerald-200 dark:border-emerald-900 bg-emerald-50/10 dark:bg-emerald-900/5' : 'border-slate-200 dark:border-slate-800'
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -135,26 +135,26 @@ export const CalendarTab: React.FC = () => {
                     <div className="flex items-center gap-2 mb-3">
                       <div className={`text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-widest ${
                         ev.type === 'turno'
-                          ? 'bg-blue-50 text-blue-700 border-blue-100'
-                          : 'bg-purple-50 text-purple-700 border-purple-100'
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-800'
+                          : 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border-purple-100 dark:border-purple-800'
                       }`}>
                         {ev.type}
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                      <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                         <Clock className="w-3.5 h-3.5" />
                         <span>{ev.time}</span>
                       </div>
                     </div>
 
-                    <h3 className="text-base font-black text-slate-900 tracking-tight mb-4 leading-tight">{ev.title}</h3>
+                    <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight mb-4 leading-tight">{ev.title}</h3>
 
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-600">
+                      <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-slate-600 dark:text-slate-400">
                         {ev.memberAvatar}
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Responsabile</p>
-                        <p className="text-xs font-bold text-slate-700">{ev.memberName}</p>
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">Responsabile</p>
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{ev.memberName}</p>
                       </div>
                     </div>
                   </div>
@@ -167,9 +167,9 @@ export const CalendarTab: React.FC = () => {
                     className="p-1 group"
                   >
                     {ev.status === 'completato' ? (
-                      <CheckCircle2 className="w-6 h-6 text-emerald-600 shadow-sm rounded-full" />
+                      <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-500 shadow-sm rounded-full" />
                     ) : (
-                      <Circle className="w-6 h-6 text-slate-200 group-hover:text-emerald-300 transition-colors" />
+                      <Circle className="w-6 h-6 text-slate-200 dark:text-slate-800 group-hover:text-emerald-300 dark:group-hover:text-emerald-600 transition-colors" />
                     )}
                   </button>
                 </div>
@@ -182,13 +182,13 @@ export const CalendarTab: React.FC = () => {
       {/* Add Event Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white w-full max-w-lg rounded-t-lg sm:rounded-lg p-10 shadow-2xl animate-in slide-in-from-bottom duration-300 border border-slate-200">
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Nuova Pianificazione</h3>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-8 border-b border-slate-100 pb-4">Configurazione slot operativo</p>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-lg sm:rounded-lg p-10 shadow-2xl animate-in slide-in-from-bottom duration-300 border border-slate-200 dark:border-slate-800">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight mb-2">Nuova Pianificazione</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-8 border-b border-slate-100 dark:border-slate-800 pb-4">Configurazione slot operativo</p>
 
             <form onSubmit={handleAddEvent} className="space-y-6">
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
                   Oggetto Intervento
                 </label>
                 <input
@@ -196,33 +196,33 @@ export const CalendarTab: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Es. Check-up Medico o Turno Domiciliare"
-                  className="w-full h-12 px-5 rounded border border-slate-300 bg-slate-50 text-sm focus:outline-none focus:border-emerald-700 font-bold"
+                  className="w-full h-12 px-5 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:border-emerald-700 dark:focus:border-emerald-500 dark:text-slate-100 font-bold"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
                     Data
                   </label>
                   <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full h-12 px-5 rounded border border-slate-300 bg-slate-50 text-sm focus:outline-none focus:border-emerald-700 font-bold"
+                    className="w-full h-12 px-5 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:border-emerald-700 dark:focus:border-emerald-500 dark:text-slate-100 font-bold"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
                     Orario
                   </label>
                   <input
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="w-full h-12 px-5 rounded border border-slate-300 bg-slate-50 text-sm focus:outline-none focus:border-emerald-700 font-bold"
+                    className="w-full h-12 px-5 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:border-emerald-700 dark:focus:border-emerald-500 dark:text-slate-100 font-bold"
                     required
                   />
                 </div>
@@ -230,13 +230,13 @@ export const CalendarTab: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
                     Tipologia
                   </label>
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value as 'turno' | 'appuntamento')}
-                    className="w-full h-12 px-4 rounded border border-slate-300 bg-slate-50 text-sm focus:outline-none focus:border-emerald-700 font-bold"
+                    className="w-full h-12 px-4 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:border-emerald-700 dark:focus:border-emerald-500 dark:text-slate-100 font-bold"
                   >
                     <option value="appuntamento">Appuntamento</option>
                     <option value="turno">Turno Assistenza</option>
@@ -244,13 +244,13 @@ export const CalendarTab: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
                     Responsabile
                   </label>
                   <select
                     value={memberName}
                     onChange={(e) => setMemberName(e.target.value)}
-                    className="w-full h-12 px-4 rounded border border-slate-300 bg-slate-50 text-sm focus:outline-none focus:border-emerald-700 font-bold"
+                    className="w-full h-12 px-4 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:border-emerald-700 dark:focus:border-emerald-500 dark:text-slate-100 font-bold"
                   >
                     {members.map((m) => (
                       <option key={m.id} value={m.name}>
@@ -265,7 +265,7 @@ export const CalendarTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 h-12 bg-white text-slate-500 font-black uppercase tracking-widest rounded border border-slate-200 hover:bg-slate-50 transition-all text-xs"
+                  className="flex-1 h-12 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-xs"
                 >
                   Annulla
                 </button>
@@ -284,35 +284,35 @@ export const CalendarTab: React.FC = () => {
       {/* Event Detail Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-lg p-10 shadow-2xl border border-slate-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-lg p-10 shadow-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2 mb-6">
               <div className={`text-[9px] font-black px-3 py-1 rounded border uppercase tracking-widest ${
                 selectedEvent.type === 'turno'
-                  ? 'bg-blue-50 text-blue-700 border-blue-100'
-                  : 'bg-purple-50 text-purple-700 border-purple-100'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-800'
+                  : 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border-purple-100 dark:border-purple-800'
               }`}>
                 {selectedEvent.type}
               </div>
             </div>
             
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-8 leading-tight">{selectedEvent.title}</h3>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight mb-8 leading-tight">{selectedEvent.title}</h3>
             
-            <div className="space-y-4 mb-10 text-xs text-slate-600 bg-slate-50 p-6 rounded-lg border border-slate-200 shadow-inner">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <span className="font-black text-slate-400 uppercase tracking-widest">Cronologia</span>
-                <span className="font-bold text-slate-900">{selectedEvent.date.split('-').reverse().join('/')} @ {selectedEvent.time}</span>
+            <div className="space-y-4 mb-10 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700 shadow-inner">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <span className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Cronologia</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100">{selectedEvent.date.split('-').reverse().join('/')} @ {selectedEvent.time}</span>
               </div>
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <span className="font-black text-slate-400 uppercase tracking-widest">Incaricato</span>
-                <span className="flex items-center gap-2 font-bold text-slate-900 uppercase tracking-tight">
-                  <div className="w-5 h-5 rounded bg-white border border-slate-300 flex items-center justify-center text-[8px]">{selectedEvent.memberAvatar}</div>
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
+                <span className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Incaricato</span>
+                <span className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight">
+                  <div className="w-5 h-5 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-[8px]">{selectedEvent.memberAvatar}</div>
                   {selectedEvent.memberName}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-black text-slate-400 uppercase tracking-widest">Status Hub</span>
+                <span className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Status Hub</span>
                 <div className={`text-[10px] font-black px-2 py-0.5 rounded border uppercase tracking-widest ${
-                  selectedEvent.status === 'completato' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 'bg-slate-200 text-slate-600 border-slate-300'
+                  selectedEvent.status === 'completato' ? 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-600'
                 }`}>
                   {selectedEvent.status}
                 </div>
@@ -333,7 +333,7 @@ export const CalendarTab: React.FC = () => {
               </button>
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="w-full h-12 bg-white text-slate-500 font-black uppercase tracking-widest rounded border border-slate-200 hover:bg-slate-50 transition-all text-xs"
+                className="w-full h-12 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-xs"
               >
                 Chiudi Modulo
               </button>

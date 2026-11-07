@@ -63,25 +63,25 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-60 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-white w-full max-w-xl rounded-t-lg sm:rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-200">
+    <div className="fixed inset-0 z-60 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 transition-colors duration-300">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-t-lg sm:rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
         {/* Corporate Header */}
-        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded bg-red-700 text-white flex items-center justify-center shadow-lg">
               <AlertTriangle className="w-7 h-7" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Activity className="w-3.5 h-3.5 text-red-700" />
-                <span className="text-[9px] font-black text-red-800 uppercase tracking-[0.2em]">Emergency Protocol</span>
+                <Activity className="w-3.5 h-3.5 text-red-700 dark:text-red-500" />
+                <span className="text-[9px] font-black text-red-800 dark:text-red-400 uppercase tracking-[0.2em]">Emergency Protocol</span>
               </div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">Centro Emergenze</h2>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none uppercase">Centro Emergenze</h2>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
+            className="w-10 h-10 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -107,23 +107,23 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({ onClose }) => {
 
           {/* Contacts Directory */}
           <div className="space-y-3">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 px-1">Directory Telefonica Critica</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-4 px-1">Directory Telefonica Critica</h3>
             <div className="grid gap-3">
               {emergencyContacts.map((contact, idx) => {
                 const Icon = contact.icon;
                 return (
                   <div
                     key={idx}
-                    className={`p-5 rounded border transition-all ${contact.color} flex items-center justify-between gap-6 hover:shadow-md group`}
+                    className={`p-5 rounded border transition-all ${contact.color} dark:bg-slate-800/50 dark:border-slate-800 flex items-center justify-between gap-6 hover:shadow-md group`}
                   >
                     <div className="flex items-center gap-5">
-                      <div className="w-12 h-12 rounded bg-white shadow-sm flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-slate-300 transition-all">
-                        <Icon className="w-6 h-6" />
+                      <div className="w-12 h-12 rounded bg-white dark:bg-slate-900 shadow-sm flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-800 group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-all">
+                        <Icon className={`w-6 h-6 ${contact.title.includes('Soccorso') ? 'text-red-700 dark:text-red-500' : 'text-slate-900 dark:text-slate-100'}`} />
                       </div>
                       <div>
-                        <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight leading-tight mb-1">{contact.title}</h4>
-                        <p className="text-[10px] font-bold uppercase tracking-wider opacity-70 mb-1">{contact.subtitle}</p>
-                        <p className="text-sm font-mono font-black text-slate-900">{contact.displayNumber || contact.number}</p>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight leading-tight mb-1">{contact.title}</h4>
+                        <p className="text-[10px] font-bold uppercase tracking-wider opacity-70 dark:text-slate-400 mb-1">{contact.subtitle}</p>
+                        <p className="text-sm font-mono font-black text-slate-900 dark:text-slate-100">{contact.displayNumber || contact.number}</p>
                       </div>
                     </div>
 
@@ -141,9 +141,9 @@ export const EmergencyModal: React.FC<EmergencyModalProps> = ({ onClose }) => {
           </div>
 
           {/* Security Footer */}
-          <div className="mt-10 p-5 bg-slate-50 rounded border border-slate-100 flex items-center gap-4">
-            <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
+          <div className="mt-10 p-5 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+            <ShieldCheck className="w-6 h-6 text-emerald-600 dark:text-emerald-500 shrink-0" />
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
               In caso di pericolo immediato, attivare preventivamente i soccorsi cantonali (144) prima di procedere con il broadcast nell'Hub.
             </p>
           </div>

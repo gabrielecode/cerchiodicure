@@ -38,6 +38,8 @@ interface AppContextType {
   updateDietaryNotes: (notes: string) => void;
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isOpen: boolean) => void;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
 }
 
 const INITIAL_PROFILE: Profile = {
@@ -325,6 +327,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeTab, setActiveTab] = useState<string>('timeline');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('ccc_theme') as 'light' | 'dark';
+    if (saved) return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   useEffect(() => {
@@ -367,6 +374,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('ccc_dietary', dietaryNotes);
   }, [dietaryNotes]);
 
+  useEffect(() => {
+    localStorage.setItem('ccc_theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
   // Medication Push Notification Watcher (mocked with toasts)
   useEffect(() => {
     const checkMedicationTimes = () => {
@@ -398,6 +414,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const interval = setInterval(checkMedicationTimes, 20000);
     return () => clearInterval(interval);
   }, [medications, profile]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
 
   const showToast = (message: string, type: 'success' | 'info' = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -626,6 +646,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateDietaryNotes,
         isSidebarOpen,
         setIsSidebarOpen,
+        theme,
+        toggleTheme,
       }}
     >
       {children}

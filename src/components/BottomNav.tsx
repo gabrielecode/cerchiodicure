@@ -16,7 +16,7 @@ export const BottomNav: React.FC = () => {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-45 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl block md:hidden h-16">
+      <nav className="fixed bottom-0 left-0 right-0 z-45 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-2xl block md:hidden h-16 transition-colors duration-300">
         <div className="grid grid-cols-5 h-full items-center px-1">
           {tabs.slice(0, 2).map((tab) => {
             const Icon = tab.icon;
@@ -26,11 +26,11 @@ export const BottomNav: React.FC = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-col items-center justify-center py-1 transition-all ${
-                  isActive ? 'text-emerald-700' : 'text-slate-400 hover:text-slate-600'
+                  isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
               >
-                <div className={`p-1.5 rounded transition-all ${isActive ? 'bg-emerald-50' : ''}`}>
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-emerald-700' : 'text-slate-400'}`} />
+                <div className={`p-1.5 rounded transition-all ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/40' : ''}`}>
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`} />
                 </div>
                 <span className={`text-[9px] font-black uppercase tracking-widest mt-0.5 ${isActive ? 'opacity-100' : 'opacity-60'}`}>{tab.label}</span>
               </button>
@@ -57,11 +57,11 @@ export const BottomNav: React.FC = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-col items-center justify-center py-1 transition-all ${
-                  isActive ? 'text-emerald-700' : 'text-slate-400 hover:text-slate-600'
+                  isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
               >
-                <div className={`p-1.5 rounded transition-all ${isActive ? 'bg-emerald-50' : ''}`}>
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-emerald-700' : 'text-slate-400'}`} />
+                <div className={`p-1.5 rounded transition-all ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/40' : ''}`}>
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`} />
                 </div>
                 <span className={`text-[9px] font-black uppercase tracking-widest mt-0.5 ${isActive ? 'opacity-100' : 'opacity-60'}`}>{tab.label}</span>
               </button>
