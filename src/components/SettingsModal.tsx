@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { X, UserPlus, Trash2, Copy, Share2, Crown, LogOut, Check, Shield, Activity, ShieldCheck } from 'lucide-react';
+import { X, UserPlus, Trash2, Copy, Share2, Crown, LogOut, Check, Shield, Activity, ShieldCheck, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface SettingsModalProps {
@@ -8,7 +8,7 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
-  const { profile, members, updateProfile, addMember, removeMember, logoutCircle, showToast } = useApp();
+  const { profile, members, updateProfile, addMember, removeMember, logoutCircle, showToast, registerPushToken } = useApp();
   const { signOut } = useAuth();
   const [recipientNameInput, setRecipientNameInput] = useState(profile?.recipientName || '');
   const [showAddMember, setShowAddMember] = useState(false);
@@ -203,6 +203,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                 </div>
               </form>
             )}
+          </section>
+
+          {/* Notifications */}
+          <section className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-6 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-[10px] font-black text-slate-900 dark:text-slate-100 uppercase tracking-[0.2em] mb-1">Notifiche Push</h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight">Ricevi aggiornamenti tempestivi su pasti e farmaci</p>
+              </div>
+              <button
+                onClick={async () => {
+                  const { requestNotificationPermission } = await import('../lib/firebase');
+                  const token = await requestNotificationPermission();
+                  if (token) {
+                    const { useApp } = await import('../context/AppContext');
+                    // We already have useApp at top level
+                    registerPushToken(token);
+                  } else {
+                    showToast("Permesso notifiche negato o non supportato.", "info");
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+              >
+                <Bell className="w-4 h-4 text-emerald-600" />
+                <span>Attiva Notifiche</span>
+              </button>
+            </div>
           </section>
 
           {/* Service Level Agreement */}

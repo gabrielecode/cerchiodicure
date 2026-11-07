@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithOtp: (email: string) => Promise<{ error: any }>;
-  signInWithProvider: (provider: 'google' | 'apple') => Promise<{ error: any }>;
+  signInWithProvider: (provider: 'google') => Promise<{ error: any }>;
   verifyOtp: (email: string, token: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
 }
@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const signInWithProvider = async (provider: 'google' | 'apple') => {
+  const signInWithProvider = async (provider: 'google') => {
     return await supabase.auth.signInWithOAuth({
       provider,
       options: {

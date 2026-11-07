@@ -134,19 +134,6 @@ export const Login: React.FC = () => {
                 <span>Continua con Google</span>
               </button>
 
-              <button
-                onClick={async () => {
-                  const { error } = await signInWithProvider('apple');
-                  if (error) showToast(error.message, 'info');
-                }}
-                className="w-full h-12 bg-black text-white rounded-lg flex items-center justify-center gap-3 text-sm font-bold hover:bg-slate-900 transition-all shadow-md"
-              >
-                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                  <path d="M17.05 20.28c-.98.95-2.05 1.72-3.32 1.72-1.23 0-1.64-.74-3.14-.74-1.51 0-1.97.72-3.14.72-1.22 0-2.39-.83-3.41-2.29-2.08-2.98-1.59-7.39.95-10.42 1.26-1.5 2.81-2.4 4.45-2.4 1.24 0 2.41.85 3.17.85.75 0 2.21-1.03 3.73-1.03 1.57 0 2.89.84 3.65 1.96-3.14 1.83-2.63 6.15.54 7.42-.64 1.71-1.51 3.41-2.48 4.31v-.1h.1zM13.2 2.3c.73-.89 1.22-2.13 1.08-3.3-1 .04-2.21.67-2.93 1.51-.65.74-1.21 2-.15 3.3 1.13.08 2.21-.59 2.21-1.51h-.21z" />
-                </svg>
-                <span>Continua con Apple</span>
-              </button>
-
               <div className="relative flex items-center py-4">
                 <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
                 <span className="flex-shrink mx-4 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">oppure</span>

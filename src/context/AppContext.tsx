@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import { Post, CareEvent, Medication, CareDocument, Member, Profile, PostType, MealPlan, MealItem } from '../types';
 import { supabase } from '../lib/supabase';
+import { auth as fbAuth, db as fbDb } from '../lib/firebase';
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface ToastMessage {
   id: string;
@@ -43,6 +46,7 @@ interface AppContextType {
   toggleTheme: () => void;
   loading: boolean;
   circleId: string | null;
+  registerPushToken: (token: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -248,6 +252,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => subscription.unsubscribe();
   }, [fetchData, migrateLocalStorage]);
 
+  // Firebase Auth sync and token registration helper
+  useEffect(() => {
+    const unsub = onAuthStateChanged(fbAuth, (fbUser) => {
+      if (!fbUser && currentView === 'app') {
+        signInAnonymously(fbAuth).catch(err => console.error("Firebase auth error:", err));
+      }
+    });
+    return () => unsub();
+  }, [currentView]);
+
+  const registerPushToken = async (token: string) => {
+    const fbUser = fbAuth.currentUser;
+    if (!fbUser) {
+      await signInAnonymously(fbAuth);
+    }
+    
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) return;
+
+    try {
+      await setDoc(doc(fbDb, 'push_tokens', user.id), {
+        userId: user.id,
+        token: token,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      showToast("Notifiche attivate con successo!");
+    } catch (err: any) {
+      console.error("Error saving push token:", err);
+      showToast("Errore nell'attivazione delle notifiche.", "info");
+    }
+  };
+
   useLayoutEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -397,7 +434,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeTab, setActiveTab, toasts, showToast, createCircle, joinCircle, logoutCircle, updateProfile,
         addPost, addEvent, toggleEventStatus, addMedication, toggleMedicationDose, addDocument, addMember,
         removeMember, updateMeal, updateDietaryNotes, isSidebarOpen, setIsSidebarOpen, theme, toggleTheme,
-        loading, circleId
+        loading, circleId, registerPushToken
       }}
     >
       {children}

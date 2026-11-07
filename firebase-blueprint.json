@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "PushToken": {
+      "title": "Push Token",
+      "description": "Stores FCM push registration tokens for users.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The user ID (Supabase UID) associated with this token."
+        },
+        "token": {
+          "type": "string",
+          "description": "The FCM registration token."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the token was registered."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the token was last updated."
+        }
+      },
+      "required": [
+        "userId",
+        "token",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/push_tokens/{tokenId}": {
+      "schema": "PushToken",
+      "description": "Collection of FCM push tokens indexed by a unique ID."
+    }
+  }
+}
