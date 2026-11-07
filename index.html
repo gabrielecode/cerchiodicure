@@ -1,19 +1,122 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#7BA88A" />
     <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Cerchio" />
-    <title>Cerchio di Cura | Assistenza Anziani Ticino</title>
-    <meta name="description" content="Coordina l'assistenza familiare per anziani non autosufficienti in Ticino." />
-    <meta property="og:title" content="Cerchio di Cura" />
-    <meta property="og:description" content="Coordina l'assistenza familiare per anziani non autosufficienti in Ticino." />
+    
+    <title>Cerchio di Cura | Assistenza Anziani e Famiglia in Ticino</title>
+    <meta name="description" content="Cerchio di Cura ottimizza l'assistenza anziani in Ticino con un coordinamento famiglia semplice e sicuro. Gestisci pasti, cure e scadenze in modo collaborativo." />
+    <link rel="canonical" href="https://DOMINIO_REALE/" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="alternate" hreflang="it-CH" href="https://DOMINIO_REALE/" />
+    <link rel="alternate" hreflang="x-default" href="https://DOMINIO_REALE/" />
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://DOMINIO_REALE/" />
+    <meta property="og:title" content="Cerchio di Cura | Assistenza Anziani e Famiglia in Ticino" />
+    <meta property="og:description" content="Cerchio di Cura ottimizza l'assistenza anziani in Ticino con un coordinamento famiglia semplice e sicuro. Gestisci pasti, cure e scadenze in modo collaborativo." />
+    <meta property="og:site_name" content="Cerchio di Cura" />
+    <meta property="og:locale" content="it_CH" />
+    <meta property="og:image" content="https://DOMINIO_REALE/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Cerchio di Cura - Coordinamento Assistenza Anziani in Ticino" />
+
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://DOMINIO_REALE/" />
+    <meta name="twitter:title" content="Cerchio di Cura | Assistenza Anziani e Famiglia in Ticino" />
+    <meta name="twitter:description" content="Cerchio di Cura ottimizza l'assistenza anziani in Ticino con un coordinamento famiglia semplice e sicuro. Gestisci pasti, cure e scadenze in modo collaborativo." />
+    <meta name="twitter:image" content="https://DOMINIO_REALE/og-image.jpg" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "ProfessionalService",
+          "@id": "https://sititicino.ch/#organization",
+          "name": "Connect & Create",
+          "url": "https://sititicino.ch",
+          "email": "info@sititicino.ch",
+          "areaServed": {
+            "@type": "AdministrativeArea",
+            "name": "Canton Ticino"
+          }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://DOMINIO_REALE/#software",
+          "name": "Cerchio di Cura",
+          "applicationCategory": "HealthApplication",
+          "operatingSystem": "Web",
+          "inLanguage": "it-CH",
+          "author": {
+            "@id": "https://sititicino.ch/#organization"
+          },
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "Piano Standard",
+              "price": "0",
+              "priceCurrency": "CHF"
+            },
+            {
+              "@type": "Offer",
+              "name": "Piano Famiglia Pro",
+              "price": "10",
+              "priceCurrency": "CHF"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "I dati sanitari e familiari sono sicuri?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Cerchio di Cura adotta un approccio Privacy First. I dati sono protetti da crittografia e l’accesso è limitato esclusivamente ai membri del cerchio autorizzati tramite codice univoco."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Come avviene il coordinamento con i servizi Spitex in Ticino?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "L’applicazione integra moduli specifici per la condivisione di piani di assistenza e referti, ottimizzati per la comunicazione con professionisti sanitari e medici di base operanti sul territorio cantonale."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Come posso invitare altri membri?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Il sistema genera un codice di accesso univoco (es. ROSA42) per ogni cerchio. Condividendo questo codice, i collaboratori possono unirsi istantaneamente all’ecosistema di assistenza."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Qual è il ruolo dell’applicazione nel supporto medico?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Cerchio di Cura funge da piattaforma di coordinamento logistico e organizzativo. Non si sostituisce a diagnosi o consulti medici, ma ne facilita la gestione operativa."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
