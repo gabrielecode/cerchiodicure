@@ -15,7 +15,8 @@ import {
   ChevronRight,
   ShieldAlert,
   Sun,
-  Moon
+  Moon,
+  Download
 } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 import { EmergencyModal } from './EmergencyModal';
@@ -124,6 +125,28 @@ export const Sidebar: React.FC = () => {
 
         {/* Footer Actions in Sidebar */}
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2 bg-slate-50/80 dark:bg-slate-800/80">
+          <button
+            onClick={() => {
+              const event = new CustomEvent('pwa-install');
+              window.dispatchEvent(event);
+              setIsSidebarOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-all"
+          >
+            <Download className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+            <span>Installa App</span>
+          </button>
+          <button
+            onClick={() => {
+              const event = new CustomEvent('pwa-install');
+              window.dispatchEvent(event);
+              setIsSidebarOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-all"
+          >
+            <Download className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+            <span>Installa App</span>
+          </button>
           <button
             onClick={() => {
               setShowEmergency(true);

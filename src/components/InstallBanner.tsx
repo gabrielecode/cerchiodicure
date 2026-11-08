@@ -21,10 +21,16 @@ export const InstallBanner: React.FC = () => {
       setShowBanner(true);
     };
 
+    const handleCustomInstall = () => {
+      setShowBanner(true);
+    };
+
     window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('pwa-install', handleCustomInstall);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('pwa-install', handleCustomInstall);
     };
   }, []);
 

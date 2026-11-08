@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Utensils, AlertCircle, Plus, Check, Edit3, Save, Clock, ChefHat, Sparkles, Activity } from 'lucide-react';
+import { db, auth } from '../lib/firebase';
+import { writeBatch, doc } from 'firebase/firestore';
 
 export const MealsTab: React.FC = () => {
-  const { profile, meals, updateMeal, dietaryNotes, updateDietaryNotes, addPost, showToast } = useApp();
+  const { profile, meals, updateMeal, dietaryNotes, updateDietaryNotes, addPost, showToast, circleId } = useApp();
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notesInput, setNotesInput] = useState(dietaryNotes);
   const [editingMealId, setEditingMealId] = useState<string | null>(null);

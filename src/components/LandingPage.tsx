@@ -84,6 +84,16 @@ export const LandingPage: React.FC = () => {
               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
             <button
+              onClick={() => {
+                const event = new CustomEvent('pwa-install');
+                window.dispatchEvent(event);
+              }}
+              className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 px-4 py-2 transition-colors flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Installa
+            </button>
+            <button
               onClick={() => setCurrentView('login')}
               className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 px-4 py-2 transition-colors"
             >
@@ -108,7 +118,7 @@ export const LandingPage: React.FC = () => {
           <div className="w-full max-w-5xl lg:max-w-6xl opacity-50 dark:opacity-40 transform scale-110 lg:translate-x-32 transition-opacity duration-1000">
             <img 
               src="/assets/aistudio/Daughter_and_mother_interacting___1fa1ba8c_6308a603.jpg" 
-              alt="Caregiver and patient" 
+              alt="Caregiver e anziano" 
               className="w-full h-auto object-contain" 
               loading="eager"
             />
@@ -119,41 +129,35 @@ export const LandingPage: React.FC = () => {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wider border border-emerald-100 dark:border-emerald-800 mb-8">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Piattaforma professionale per l'assistenza domiciliare</span>
+              <span>Gestione Assistenza Domiciliare Ticino</span>
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-[1.05] mb-8">
-              L'assistenza domiciliare, <br />
-              <span className="text-emerald-700 dark:text-emerald-500">finalmente coordinata.</span>
+              Assistenza Domiciliare, <br />
+              <span className="text-emerald-700 dark:text-emerald-500">Coordinata e Semplice.</span>
             </h1>
             
             <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl leading-relaxed font-medium">
-              Centralizza la gestione di farmaci, visite e turni di assistenza in un ecosistema digitale professionale. Progettato per le famiglie ticinesi che cercano affidabilità e trasparenza.
+              Cerchio di Cura è la piattaforma professionale che unifica la gestione di terapie farmacologiche, agenda visite, alimentazione e documenti sanitari. La soluzione definitiva per le famiglie in Ticino che cercano trasparenza, sicurezza e collaborazione h24.
             </p>
             
-            <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4 mb-10">
               <button
                 onClick={() => setCurrentView('login')}
                 className="w-full sm:w-auto h-14 bg-emerald-700 hover:bg-emerald-800 text-white font-black uppercase tracking-widest rounded-lg shadow-xl transition-all flex items-center justify-center gap-3 text-sm px-10"
               >
-                <span>Attiva ora</span>
+                <span>Attiva il Tuo Cerchio</span>
                 <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setCurrentView('login')}
-                className="w-full sm:w-auto h-14 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 font-black uppercase tracking-widest px-10 rounded-lg border border-slate-300 dark:border-slate-700 transition-all flex items-center justify-center gap-2 text-sm"
-              >
-                <span>Accesso Codice</span>
               </button>
             </div>
 
-            <div className="mt-12 flex items-center gap-8 text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.2em]">
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-500" /> No setup fee
-              </span>
-              <span className="flex items-center gap-2 border-l border-slate-200 dark:border-slate-800 pl-8">
-                <Globe2 className="w-4 h-4 text-emerald-600 dark:text-emerald-500" /> Swiss Data Hosting
-              </span>
+            <div className="p-6 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+              <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+                <Download className="w-4 h-4 text-emerald-700" /> Disponibile su ogni dispositivo
+              </h4>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                La nostra app si adatta alle tue esigenze: installala su <strong>PC, Mac, Android e iPhone/iPad</strong> per accedere al coordinamento della tua famiglia ovunque ti trovi. Nessun download complesso: basta un click dal browser per avere Cerchio di Cura sempre a portata di mano.
+              </p>
             </div>
           </div>
         </div>
