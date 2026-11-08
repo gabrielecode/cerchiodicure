@@ -1,9 +1,8 @@
 export const formatDateToLocale = (date: Date): string => {
-  return date.toLocaleDateString('de-CH', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).split('.').reverse().join('-');
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export const formatTimestampKey = (date: Date, timeSlot: string): string => {

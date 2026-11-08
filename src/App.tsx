@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { LandingPage } from './components/LandingPage';
 import { Login } from './components/Login';
@@ -11,15 +11,17 @@ import { Sidebar } from './components/Sidebar';
 import { BottomNav } from './components/BottomNav';
 import { ToastContainer } from './components/Toast';
 import { InstallBanner } from './components/InstallBanner';
-import { TimelineTab } from './components/TimelineTab';
-import { CalendarTab } from './components/CalendarTab';
-import { MedicationsTab } from './components/MedicationsTab';
-import { DocumentsTab } from './components/DocumentsTab';
-import { GuidaTab } from './components/GuidaTab';
-import { MealsTab } from './components/MealsTab';
-import { ChatTab } from './components/ChatTab';
-import { HeartHandshake, Sun, Moon } from 'lucide-react';
+import { HeartHandshake, Sun, Moon, Loader2 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
+import { PrivacyPolicy } from './components/PrivacyPolicy';
+
+const TimelineTab = lazy(() => import('./components/TimelineTab').then(m => ({ default: m.TimelineTab })));
+const CalendarTab = lazy(() => import('./components/CalendarTab').then(m => ({ default: m.CalendarTab })));
+const MedicationsTab = lazy(() => import('./components/MedicationsTab').then(m => ({ default: m.MedicationsTab })));
+const MealsTab = lazy(() => import('./components/MealsTab').then(m => ({ default: m.MealsTab })));
+const DocumentsTab = lazy(() => import('./components/DocumentsTab').then(m => ({ default: m.DocumentsTab })));
+const GuidaTab = lazy(() => import('./components/GuidaTab').then(m => ({ default: m.GuidaTab })));
+const ChatTab = lazy(() => import('./components/ChatTab').then(m => ({ default: m.ChatTab })));
 
 const MainContent: React.FC = () => {
   const { 
@@ -44,6 +46,10 @@ const MainContent: React.FC = () => {
         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Certificazione Sessione...</span>
       </div>
     </div>;
+  }
+
+  if (currentView === 'privacy') {
+    return <PrivacyPolicy />;
   }
 
   if (currentView === 'landing') {
@@ -140,13 +146,19 @@ const MainContent: React.FC = () => {
       {/* Main Content Area (with left margin on desktop to accommodate fixed sidebar) */}
       <div className="flex-1 flex flex-col md:ml-64 min-h-screen pt-16 md:pt-0 pb-24 md:pb-8">
         <main className="flex-1 w-full">
-          {activeTab === 'timeline' && <TimelineTab />}
-          {activeTab === 'calendario' && <CalendarTab />}
-          {activeTab === 'farmaci' && <MedicationsTab />}
-          {activeTab === 'pasti' && <MealsTab />}
-          {activeTab === 'documenti' && <DocumentsTab />}
-          {activeTab === 'guida' && <GuidaTab />}
-          {activeTab === 'chat' && <ChatTab />}
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[50vh] p-8">
+              <Loader2 className="w-8 h-8 text-emerald-700 animate-spin opacity-50" />
+            </div>
+          }>
+            {activeTab === 'timeline' && <TimelineTab />}
+            {activeTab === 'calendario' && <CalendarTab />}
+            {activeTab === 'farmaci' && <MedicationsTab />}
+            {activeTab === 'pasti' && <MealsTab />}
+            {activeTab === 'documenti' && <DocumentsTab />}
+            {activeTab === 'guida' && <GuidaTab />}
+            {activeTab === 'chat' && <ChatTab />}
+          </Suspense>
         </main>
       </div>
 

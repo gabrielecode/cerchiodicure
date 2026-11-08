@@ -34,12 +34,19 @@ export interface Medication {
 
 export interface CareDocument {
   id: string;
-  title: string;
+  name: string;
+  title?: string;
   date?: string;
   createdAt?: any;
   author: string;
-  fileSize: string;
-  fileType: string;
+  fileSize?: string;
+  fileType?: string;
+  size: number;
+  mimeType: string;
+  path: string;
+  downloadUrl?: string;
+  circleId?: string;
+  createdBy?: string;
 }
 
 export interface Member {

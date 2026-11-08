@@ -6,6 +6,7 @@ export const GuidaTab: React.FC = () => {
   const { showToast } = useApp();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [savedFavorites, setSavedFavorites] = useState<Record<number, boolean>>({});
+  const [searchQuery, setSearchQuery] = useState('');
 
   const articles = [
     {
@@ -38,6 +39,16 @@ export const GuidaTab: React.FC = () => {
     },
   ];
 
+  const filteredArticles = articles.filter((art) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      art.title.toLowerCase().includes(q) ||
+      art.category.toLowerCase().includes(q) ||
+      art.content.toLowerCase().includes(q)
+    );
+  });
+
   const toggleAccordion = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
@@ -64,18 +75,25 @@ export const GuidaTab: React.FC = () => {
         <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none">Normative & Guide Ticino</h1>
       </header>
 
-      {/* Search Proxy */}
+      {/* Search Input */}
       <div className="mb-8 relative max-w-xl">
         <Search className="absolute left-4 top-3.5 w-4 h-4 text-slate-300 dark:text-slate-600" />
         <input 
           type="text" 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Ricerca termini legali o servizi (es. Spitex, IAS)..." 
           className="w-full h-12 pl-12 pr-4 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:border-emerald-700 dark:focus:border-emerald-500 shadow-sm font-medium dark:text-slate-100"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {articles.map((art, idx) => {
+        {filteredArticles.length === 0 ? (
+          <div className="col-span-full bg-white dark:bg-slate-900 rounded-lg p-8 text-center border border-slate-200 dark:border-slate-800 text-slate-400 text-sm">
+            Nessun articolo trovato per "{searchQuery}".
+          </div>
+        ) : (
+          filteredArticles.map((art, idx) => {
           const isOpen = openIndex === idx;
           const isSaved = !!savedFavorites[idx];
           return (
@@ -131,7 +149,7 @@ export const GuidaTab: React.FC = () => {
               )}
             </div>
           );
-        })}
+        }))}
       </div>
 
       {/* Corporate Info Footer */}

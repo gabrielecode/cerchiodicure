@@ -66,8 +66,8 @@ interface ToastMessage {
 
 interface AppContextType {
   profile: Profile | null;
-  currentView: 'landing' | 'login' | 'app';
-  setCurrentView: (view: 'landing' | 'login' | 'app') => void;
+  currentView: 'landing' | 'login' | 'app' | 'privacy';
+  setCurrentView: (view: 'landing' | 'login' | 'app' | 'privacy') => void;
   members: Member[];
   posts: Post[];
   events: CareEvent[];
@@ -107,7 +107,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [circleId, setCircleId] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<'landing' | 'login' | 'app'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'login' | 'app' | 'privacy'>('landing');
   const [loading, setLoading] = useState(true);
   
   const [members, setMembers] = useState<Member[]>([]);

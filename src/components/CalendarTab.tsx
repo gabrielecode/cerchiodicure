@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Calendar as CalendarIcon, Clock, CheckCircle2, Circle, User, Activity, ChevronRight } from 'lucide-react';
 import { CareEvent } from '../types';
+import { formatDateToLocale } from '../lib/date';
 
 export const CalendarTab: React.FC = () => {
   const { events, members, addEvent, toggleEventStatus, showToast } = useApp();
@@ -17,16 +18,17 @@ export const CalendarTab: React.FC = () => {
 
     const days = [];
     const dayNames = ['LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB', 'DOM'];
+    const todayLocalStr = formatDateToLocale(now);
 
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = formatDateToLocale(d);
       days.push({
         name: dayNames[i],
         dateNum: d.getDate(),
         dateStr,
-        isToday: dateStr === now.toISOString().split('T')[0],
+        isToday: dateStr === todayLocalStr,
       });
     }
     return days;
