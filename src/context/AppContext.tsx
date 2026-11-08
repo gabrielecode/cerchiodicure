@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useLayoutEffect, useCallback } from 'react';
+import { formatDateToLocale } from '../lib/date';
 import { 
   collection, 
   doc, 
@@ -149,6 +150,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const unsubscribers: (() => void)[] = [];
+    const storageKey = `ccc_current_circle_id_${auth.currentUser.uid}`;
 
     // Members
     const membersQuery = query(collection(db, 'circles', circleId, 'members'));
@@ -231,7 +233,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // Find which circle this user belongs to
       try {
-        let savedCircleId = localStorage.getItem('ccc_current_circle_id');
+        const storageKey = `ccc_current_circle_id_${user.uid}`;
+        let savedCircleId = localStorage.getItem(storageKey);
         
         if (!savedCircleId) {
           const userCircleSnap = await getDoc(doc(db, 'user_circles', user.uid));
@@ -250,7 +253,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               const circleData = circleSnap.data();
               const memberData = memberSnap.data();
               
-              localStorage.setItem('ccc_current_circle_id', savedCircleId);
+              localStorage.setItem(storageKey, savedCircleId);
               setCircleId(savedCircleId);
               setProfile({
                 recipientName: circleData.recipientName,
@@ -307,8 +310,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const toggleTheme = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
 
   const logoutCircle = async () => {
+    if (auth.currentUser) {
+      localStorage.removeItem(`ccc_current_circle_id_${auth.currentUser.uid}`);
+    }
     await auth.signOut();
-    localStorage.removeItem('ccc_current_circle_id');
+  };
+
+  const generateInviteCode = async (): Promise<string> => {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    
+    for (let i = 0; i < 5; i++) {
+      let code = '';
+      const array = new Uint8Array(6);
+      crypto.getRandomValues(array);
+      for (let j = 0; j < 6; j++) {
+        code += alphabet[array[j] % alphabet.length];
+      }
+      
+      const inviteSnap = await getDoc(doc(db, 'invite_codes', code));
+      if (!inviteSnap.exists()) {
+        return code;
+      }
+    }
+    throw new Error('Impossibile generare un codice invito univoco.');
   };
 
   const createCircle = async (recipientName: string, userName: string, userRole: string) => {
@@ -316,7 +340,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!user) return;
 
     try {
-      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const inviteCode = await generateInviteCode();
       
       const batch = writeBatch(db);
       
@@ -347,13 +371,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         recipientName
       });
 
+      // 5. Update User Circle Mapping
+      batch.set(doc(db, 'user_circles', user.uid), { circleId: circleRef.id });
+
+      await batch.commit();
+
+      // Second Batch: Meals (after membership is committed)
+      const mealsBatch = writeBatch(db);
+      
       // 4. Create Meals
       const days = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
       const dayNames = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
       
       days.forEach((dayId, index) => {
         const mealRef = doc(db, 'circles', circleRef.id, 'meals', dayId);
-        batch.set(mealRef, {
+        mealsBatch.set(mealRef, {
           day: dayNames[index],
           lunch: { dish: '', provider: '', status: 'pianificato' },
           dinner: { dish: '', provider: '', status: 'pianificato' },
@@ -362,13 +394,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           order: index
         });
       });
-
-      // 5. Update User Circle Mapping
-      batch.set(doc(db, 'user_circles', user.uid), { circleId: circleRef.id });
-
-      await batch.commit();
       
-      localStorage.setItem('ccc_current_circle_id', circleRef.id);
+      await mealsBatch.commit();
+      
+      localStorage.setItem(`ccc_current_circle_id_${user.uid}`, circleRef.id);
       setCircleId(circleRef.id);
       setProfile({ recipientName, userName, userRole, inviteCode, isOnboarded: true });
       setCurrentView('app');
@@ -407,7 +436,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Update User Circle Mapping
       await setDoc(doc(db, 'user_circles', user.uid), { circleId: targetCircleId });
 
-      localStorage.setItem('ccc_current_circle_id', targetCircleId);
+      localStorage.setItem(`ccc_current_circle_id_${user.uid}`, targetCircleId);
       setCircleId(targetCircleId);
       
       // We don't have circle data here easily without getDoc(circles/cid), 
@@ -505,15 +534,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const toggleMedicationDose = async (medId: string, timeSlot: string, dateStr: string = new Date().toISOString().split('T')[0]) => {
+  const toggleMedicationDose = async (medId: string, timeSlot: string, dateStr?: string) => {
     if (!circleId) return;
     const med = medications.find(m => m.id === medId);
     if (!med) return;
-    const key = `${dateStr}_${timeSlot}`;
-    const nextChecks = { ...med.checks, [key]: !med.checks[key] };
+    const date = dateStr ? new Date(dateStr) : new Date();
+    const key = `${formatDateToLocale(date)}_${timeSlot}`;
+    const currentValue = med.checks[key] || false;
+    const nextValue = !currentValue;
+    
     try {
-      await updateDoc(doc(db, 'circles', circleId, 'medications', medId), { checks: nextChecks });
-      if (nextChecks[key]) {
+      await updateDoc(doc(db, 'circles', circleId, 'medications', medId), {
+        [`checks.${key}`]: nextValue
+      });
+      if (nextValue) {
         addPost(`Ha preso la dose delle ore ${timeSlot}.`, 'pill', true);
       }
     } catch (error: any) {

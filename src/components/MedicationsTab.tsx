@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Pill, CheckSquare, Square, User, Clock, Bell, Activity } from 'lucide-react';
 import { Medication } from '../types';
+import { formatDateToLocale } from '../lib/date';
 
 export const MedicationsTab: React.FC = () => {
   const { medications, members, addMedication, toggleMedicationDose, showToast, profile } = useApp();
@@ -12,7 +13,7 @@ export const MedicationsTab: React.FC = () => {
   const [timesStr, setTimesStr] = useState('08:00, 20:00');
   const [responsible, setResponsible] = useState(members[0]?.name || 'Marco');
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = formatDateToLocale(new Date());
 
   const handleAddMedication = (e: React.FormEvent) => {
     e.preventDefault();

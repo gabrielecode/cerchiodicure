@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { formatDateToLocale } from '../lib/date';
 import { 
   Settings, 
   Mic, 
@@ -70,7 +71,7 @@ export const TimelineTab: React.FC = () => {
     }
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = formatDateToLocale(new Date());
   const todayEvents = events.filter((ev) => ev.date === todayStr);
 
   return (

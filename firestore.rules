@@ -27,6 +27,15 @@ service cloud.firestore {
       return resource.data;
     }
 
+    // User Circles mapping
+    match /user_circles/{uid} {
+      function isValidUserCircle(data) {
+        return data.keys().hasOnly(['circleId']) &&
+               data.circleId is string && data.circleId.size() >= 1 && data.circleId.size() <= 128;
+      }
+      allow read, write: if isSignedIn() && uid == request.auth.uid && isValidUserCircle(incoming());
+    }
+
     // Circles
     match /circles/{circleId} {
       function isValidCircle(data) {
@@ -50,7 +59,7 @@ service cloud.firestore {
                  data.inviteCode is string &&
                  (
                    get(/databases/$(database)/documents/invite_codes/$(data.inviteCode)).data.circleId == circleId ||
-                   (request.auth.uid == memberId && get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid)
+                   (request.auth.uid == memberId && getAfter(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid)
                  ) &&
                  data.joinedAt == request.time;
         }
@@ -74,32 +83,65 @@ service cloud.firestore {
 
       // Events subcollection
       match /events/{eventId} {
+        function isValidEvent(data) {
+          return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+                 data.date is timestamp &&
+                 data.circleId == circleId && data.createdBy == request.auth.uid;
+        }
         allow read: if isMember(circleId);
-        allow write: if isMember(circleId);
+        allow create: if isMember(circleId) && isValidEvent(incoming());
+        allow update: if isMember(circleId) && incoming().circleId == circleId && incoming().createdBy == existing().createdBy &&
+                         (existing().createdBy == request.auth.uid || get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid);
+        allow delete: if isMember(circleId) && (existing().createdBy == request.auth.uid || get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid);
       }
 
       // Medications subcollection
       match /medications/{medicationId} {
+        function isValidMedication(data) {
+          return data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+                 data.circleId == circleId && data.createdBy == request.auth.uid;
+        }
         allow read: if isMember(circleId);
-        allow write: if isMember(circleId);
+        allow create: if isMember(circleId) && isValidMedication(incoming());
+        allow update: if isMember(circleId) && incoming().circleId == circleId && incoming().createdBy == existing().createdBy &&
+                         (existing().createdBy == request.auth.uid || get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid);
+        allow delete: if isMember(circleId) && (existing().createdBy == request.auth.uid || get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid);
       }
 
       // Documents subcollection
       match /documents/{documentId} {
+        function isValidDocument(data) {
+          return data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+                 data.size is number &&
+                 data.mimeType is string &&
+                 data.path is string &&
+                 data.circleId == circleId && data.createdBy == request.auth.uid;
+        }
         allow read: if isMember(circleId);
-        allow write: if isMember(circleId);
+        allow create: if isMember(circleId) && isValidDocument(incoming());
+        allow update: if isMember(circleId) && incoming().circleId == circleId && incoming().createdBy == existing().createdBy &&
+                         (existing().createdBy == request.auth.uid || get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid);
+        allow delete: if isMember(circleId) && (existing().createdBy == request.auth.uid || get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid);
       }
 
       // Meals subcollection
       match /meals/{mealId} {
+        function isValidMeal(data) {
+          return data.day is string &&
+                 data.lunch is map && data.dinner is map &&
+                 data.circleId == circleId && data.createdBy == request.auth.uid;
+        }
         allow read: if isMember(circleId);
-        allow write: if isMember(circleId);
+        allow create: if isMember(circleId) && isValidMeal(incoming());
+        allow update: if isMember(circleId) && incoming().circleId == circleId && incoming().createdBy == existing().createdBy &&
+                         (existing().createdBy == request.auth.uid || get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid);
+        allow delete: if isMember(circleId) && (existing().createdBy == request.auth.uid || get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid);
       }
 
       // Dietary notes
       match /dietary_notes/notes {
         allow read: if isMember(circleId);
-        allow write: if isMember(circleId);
+        allow write: if isMember(circleId) && incoming().circleId == circleId && incoming().createdBy == request.auth.uid;
       }
 
       // Messages subcollection
