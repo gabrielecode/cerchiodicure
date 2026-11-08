@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://DOMINIO_REALE/sitemap.xml
+Sitemap: https://[INSERISCI DOMINIO]/sitemap.xml

@@ -15,10 +15,12 @@ interface AuthContextType {
   user: User | null;
   session: any; // Compatibility with existing code
   loading: boolean;
-  signInWithOtp: (email: string) => Promise<{ error: any }>;
+  sendEmailLink: (email: string) => Promise<{ error: any }>;
   signInWithProvider: (provider: 'google') => Promise<{ error: any }>;
-  verifyOtp: (email: string, token: string) => Promise<{ error: any }>; // Token is unused for email link but kept for signature
+  signInWithEmailLinkDirect: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
+  isEmailLinkPending: boolean;
+  emailLinkError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +28,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEmailLinkPending, setIsEmailLinkPending] = useState(false);
+  const [emailLinkError, setEmailLinkError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -33,27 +37,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    // Handle email link redirect if needed
+    // Handle email link redirect if present
     if (isSignInWithEmailLink(auth, window.location.href)) {
-      let email = window.localStorage.getItem('emailForSignIn');
-      if (!email) {
-        email = window.prompt('Per favore inserisci la tua email per confermare:');
-      }
+      const email = window.localStorage.getItem('emailForSignIn');
       if (email) {
         signInWithEmailLink(auth, email, window.location.href)
           .then(() => {
             window.localStorage.removeItem('emailForSignIn');
+            window.history.replaceState({}, '', window.location.pathname);
+            setIsEmailLinkPending(false);
+            setEmailLinkError(null);
           })
           .catch((error) => {
             console.error("Errore durante l'accesso con link email:", error);
+            setEmailLinkError("Link di accesso non valido o scaduto. Richiedine uno nuovo.");
           });
+      } else {
+        // Link opened on another device / browser where emailForSignIn is missing
+        setIsEmailLinkPending(true);
       }
     }
 
     return () => unsubscribe();
   }, []);
 
-  const signInWithOtp = async (email: string) => {
+  const signInWithEmailLinkDirect = async (email: string) => {
+    try {
+      await signInWithEmailLink(auth, email, window.location.href);
+      window.localStorage.removeItem('emailForSignIn');
+      window.history.replaceState({}, '', window.location.pathname);
+      setIsEmailLinkPending(false);
+      setEmailLinkError(null);
+      return { error: null };
+    } catch (error: any) {
+      console.error("Errore durante l'accesso con link email:", error);
+      const msg = "Link di accesso non valido o scaduto. Richiedine uno nuovo.";
+      setEmailLinkError(msg);
+      return { error: { message: msg } };
+    }
+  };
+
+  const sendEmailLink = async (email: string) => {
     try {
       const actionCodeSettings = {
         url: window.location.origin,
@@ -77,12 +101,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const verifyOtp = async (email: string, _token: string) => {
-    // In Firebase, verification happens via the link in the email.
-    // This is kept for compatibility with the existing Login.tsx calls.
-    return { error: { message: "Usa il link inviato alla tua email per accedere." } };
-  };
-
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
@@ -93,7 +111,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session: user, loading, signInWithOtp, signInWithProvider, verifyOtp, signOut }}>
+    <AuthContext.Provider value={{
+      user,
+      session: user,
+      loading,
+      sendEmailLink,
+      signInWithProvider,
+      signInWithEmailLinkDirect,
+      signOut,
+      isEmailLinkPending,
+      emailLinkError
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,9 +5,10 @@ import { useAuth } from '../context/AuthContext';
 
 export const Login: React.FC = () => {
   const { createCircle, joinCircle, setCurrentView, showToast, theme, toggleTheme } = useApp();
-  const { signInWithOtp, signInWithProvider, verifyOtp, user } = useAuth();
+  const { sendEmailLink, signInWithProvider, signInWithEmailLinkDirect, isEmailLinkPending, emailLinkError, user } = useAuth();
   const [authStep, setAuthStep] = useState<'email' | 'otp' | 'profile'>('email');
   const [email, setEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'create' | 'join'>('create');
   const [userName, setUserName] = useState('');
@@ -19,13 +20,24 @@ export const Login: React.FC = () => {
     e.preventDefault();
     if (!email.trim()) return;
     setLoading(true);
-    const { error } = await signInWithOtp(email.trim());
+    const { error } = await sendEmailLink(email.trim());
     setLoading(false);
     if (error) {
       showToast(error.message, 'info');
     } else {
       setAuthStep('otp');
-      showToast('Codice di verifica inviato via email');
+      showToast('Link di accesso inviato');
+    }
+  };
+
+  const handleConfirmEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirmEmail.trim()) return;
+    setLoading(true);
+    const { error } = await signInWithEmailLinkDirect(confirmEmail.trim());
+    setLoading(false);
+    if (error) {
+      showToast(error.message || 'Link di accesso non valido o scaduto. Richiedine uno nuovo.', 'info');
     }
   };
 
@@ -155,8 +167,50 @@ export const Login: React.FC = () => {
                 disabled={loading}
                 className="w-full h-14 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-black uppercase tracking-[0.2em] rounded-lg shadow-md transition-all flex items-center justify-center gap-3 text-sm mt-4"
               >
-                <span>{loading ? 'Invio in corso...' : 'Invia Codice'}</span>
+                <span>{loading ? 'Invio in corso...' : 'Invia link di accesso'}</span>
                 <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEmailLinkPending) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between p-4 sm:p-6 lg:p-8 font-sans text-slate-700 dark:text-slate-300 transition-colors duration-300">
+        <div className="my-auto py-8 max-w-md w-full mx-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-lg p-10 shadow-xl border border-slate-200 dark:border-slate-800 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-emerald-700 text-white mb-6 shadow-md">
+              <KeyRound className="w-7 h-7" />
+            </div>
+            <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Conferma la tua email</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-3 mb-6">
+              Hai aperto il link di accesso su questo dispositivo. Inserisci l'email a cui è stato inviato per completare l'accesso.
+            </p>
+
+            {emailLinkError && (
+              <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-xs font-semibold">
+                {emailLinkError}
+              </div>
+            )}
+
+            <form onSubmit={handleConfirmEmailSubmit} className="space-y-4">
+              <input
+                type="email"
+                value={confirmEmail}
+                onChange={(e) => setConfirmEmail(e.target.value)}
+                placeholder="operatore@esempio.ch"
+                className="w-full h-12 px-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:border-emerald-700 dark:focus:border-emerald-500 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 transition-all"
+                required
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-black uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-xs"
+              >
+                {loading ? 'Verifica in corso...' : 'Conferma ed entra'}
               </button>
             </form>
           </div>
