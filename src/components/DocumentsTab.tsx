@@ -27,7 +27,6 @@ export const DocumentsTab: React.FC = () => {
 
     addDocument({
       title: title.trim(),
-      date: todayStr,
       author: author.trim(),
       fileSize: '1.5 MB',
       fileType,
@@ -100,7 +99,7 @@ export const DocumentsTab: React.FC = () => {
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-400">
                   <Calendar className="w-3 h-3 text-slate-300 dark:text-slate-600" />
-                  <span>{doc.date}</span>
+                  <span>{doc.createdAt?.toDate ? doc.createdAt.toDate().toLocaleDateString('it-CH') : doc.date}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-400">
                   <User className="w-3 h-3 text-slate-300 dark:text-slate-600" />
@@ -206,7 +205,7 @@ export const DocumentsTab: React.FC = () => {
             <div className="space-y-4 mb-10 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-inner">
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
                 <span className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Metadata Date</span>
-                <span className="font-bold text-slate-900 dark:text-slate-100">{selectedDoc.date}</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100">{selectedDoc.createdAt?.toDate ? selectedDoc.createdAt.toDate().toLocaleDateString('it-CH') : selectedDoc.date}</span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
                 <span className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Owner</span>

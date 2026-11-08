@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cerchio-cura-v1';
+const CACHE_NAME = 'cerchio-cura-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -30,44 +30,47 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
-  // Skip non-GET or chrome-extension requests
-  if (event.request.method !== 'GET' || url.protocol === 'chrome-extension:') {
+  if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Strategy: Network-first for dynamic / navigation, Cache-first for static assets
-  if (url.pathname.startsWith('/api/') || event.request.mode === 'navigate') {
+  // API calls: always network-first, return 503 if offline
+  if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          return caches.match('/index.html') || caches.match('/');
-        })
-    );
-  } else {
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          // Return cached and fetch update in background
-          fetch(event.request).then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, networkResponse);
-              });
-            }
-          }).catch(() => {});
-          return cachedResponse;
-        }
-        return fetch(event.request).then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse;
-          }
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-          return networkResponse;
+      fetch(event.request).catch(() => {
+        return new Response(JSON.stringify({error:'offline'}), {
+          status: 503, 
+          headers:{'Content-Type':'application/json'}
         });
       })
     );
+    return;
   }
+
+  // Navigation: network-first, fallback to /index.html
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => caches.match('/index.html') || caches.match('/'))
+    );
+    return;
+  }
+
+  // Static assets: cache-first
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+      
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
+        }
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+        return networkResponse;
+      });
+    })
+  );
 });

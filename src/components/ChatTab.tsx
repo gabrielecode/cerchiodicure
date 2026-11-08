@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
-import { db } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { Send, User as UserIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -54,13 +54,13 @@ export const ChatTab: React.FC = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !circleId || !profile || sending) return;
+    if (!newMessage.trim() || !circleId || !profile || sending || !auth.currentUser) return;
 
     setSending(true);
     try {
       await addDoc(collection(db, 'circles', circleId, 'messages'), {
         text: newMessage.trim(),
-        senderId: profile.userName, // Using userName as ID for simplicity in this anonymous context
+        senderId: auth.currentUser.uid,
         senderName: profile.userName,
         createdAt: serverTimestamp()
       });
@@ -109,7 +109,7 @@ export const ChatTab: React.FC = () => {
             </div>
           ) : (
             messages.map((msg) => {
-              const isMe = msg.senderName === profile?.userName;
+              const isMe = msg.senderId === auth.currentUser?.uid;
               return (
                 <motion.div
                   key={msg.id}

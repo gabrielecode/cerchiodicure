@@ -1,9 +1,61 @@
 import React, { createContext, useContext, useState, useEffect, useLayoutEffect, useCallback } from 'react';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  getDoc, 
+  getDocs, 
+  query, 
+  where, 
+  onSnapshot, 
+  serverTimestamp,
+  orderBy,
+  limit,
+  writeBatch
+} from 'firebase/firestore';
 import { Post, CareEvent, Medication, CareDocument, Member, Profile, PostType, MealPlan, MealItem } from '../types';
-import { supabase } from '../lib/supabase';
-import { auth as fbAuth, db as fbDb } from '../lib/firebase';
-import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../lib/firebase';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  // We'll just log it and maybe show a toast in the component, but we should throw it for the context to handle
+  throw new Error(JSON.stringify(errInfo));
+}
 
 interface ToastMessage {
   id: string;
@@ -78,210 +130,169 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, 3500);
   }, []);
 
-  const fetchData = useCallback(async (cid: string) => {
-    setLoading(true);
-    try {
-      const [
-        { data: mData },
-        { data: pData },
-        { data: eData },
-        { data: medData },
-        { data: dData },
-        { data: mealsData },
-        { data: dietData }
-      ] = await Promise.all([
-        supabase.from('circle_members').select('*').eq('circle_id', cid),
-        supabase.from('posts').select('*').eq('circle_id', cid).order('timestamp', { ascending: false }),
-        supabase.from('events').select('*').eq('circle_id', cid).order('date', { ascending: true }),
-        supabase.from('medications').select('*').eq('circle_id', cid),
-        supabase.from('documents').select('*').eq('circle_id', cid).order('date', { ascending: false }),
-        supabase.from('meals').select('*').eq('circle_id', cid),
-        supabase.from('dietary_notes').select('notes').eq('circle_id', cid).maybeSingle()
-      ]);
+  const logFirestoreError = (err: any, operation: OperationType, path: string) => {
+    console.error(`Firestore Error [${operation}] at ${path}:`, err);
+    showToast("Errore di sincronizzazione", "info");
+  };
 
-      if (mData) setMembers(mData.map(m => ({ id: m.user_id, name: m.display_name, role: m.role, avatar: m.display_name.substring(0,2).toUpperCase(), online: true })));
-      if (pData) setPosts(pData.map(p => ({ ...p, timestamp: new Date(p.timestamp).toLocaleString() })));
-      if (eData) setEvents(eData);
-      if (medData) setMedications(medData);
-      if (dData) setDocuments(dData);
-      if (mealsData) setMeals(mealsData);
-      if (dietData) setDietaryNotes(dietData.notes);
-    } catch (err: any) {
-      showToast('Errore nel caricamento dei dati: ' + err.message, 'info');
-    } finally {
-      setLoading(false);
-    }
-  }, [showToast]);
-
-  const migrateLocalStorage = useCallback(async (cid: string) => {
-    const keys = ['ccc_posts', 'ccc_events', 'ccc_medications', 'ccc_documents', 'ccc_meals', 'ccc_dietary'];
-    const hasData = keys.some(k => localStorage.getItem(k));
-    
-    if (hasData && window.confirm("Abbiamo trovato dati salvati localmente. Vuoi importarli in questo Cerchio?")) {
-      try {
-        const posts = JSON.parse(localStorage.getItem('ccc_posts') || '[]');
-        const events = JSON.parse(localStorage.getItem('ccc_events') || '[]');
-        const medications = JSON.parse(localStorage.getItem('ccc_medications') || '[]');
-        const documents = JSON.parse(localStorage.getItem('ccc_documents') || '[]');
-        const meals = JSON.parse(localStorage.getItem('ccc_meals') || '[]');
-        const dietary = localStorage.getItem('ccc_dietary') || "";
-
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (posts.length > 0) {
-          await supabase.from('posts').insert(posts.map((p: any) => ({
-            circle_id: cid,
-            created_by: user?.id,
-            author_name: p.authorName,
-            author_avatar: p.authorAvatar,
-            type: p.type,
-            text: p.text,
-            completed: p.completed,
-            image_url: p.imageUrl
-          })));
-        }
-
-        if (events.length > 0) {
-          await supabase.from('events').insert(events.map((e: any) => ({
-            circle_id: cid,
-            created_by: user?.id,
-            title: e.title,
-            date: e.date,
-            time: e.time,
-            member_name: e.memberName,
-            member_avatar: e.memberAvatar,
-            type: e.type,
-            status: e.status,
-            notes: e.notes
-          })));
-        }
-
-        if (medications.length > 0) {
-          await supabase.from('medications').insert(medications.map((m: any) => ({
-            circle_id: cid,
-            created_by: user?.id,
-            name: m.name,
-            dosage: m.dosage,
-            times: m.times,
-            responsible: m.responsible,
-            checks: m.checks
-          })));
-        }
-
-        if (documents.length > 0) {
-          await supabase.from('documents').insert(documents.map((d: any) => ({
-            circle_id: cid,
-            created_by: user?.id,
-            title: d.title,
-            date: d.date,
-            author: d.author,
-            file_size: d.fileSize,
-            file_type: d.fileType
-          })));
-        }
-
-        if (meals.length > 0) {
-          await supabase.from('meals').insert(meals.map((m: any) => ({
-            circle_id: cid,
-            created_by: user?.id,
-            day: m.day,
-            lunch: m.lunch,
-            dinner: m.dinner
-          })));
-        }
-
-        if (dietary) {
-          await supabase.from('dietary_notes').upsert({ circle_id: cid, notes: dietary, created_by: user?.id });
-        }
-
-        keys.forEach(k => localStorage.removeItem(k));
-        showToast("Migrazione completata con successo!");
-        fetchData(cid);
-      } catch (err: any) {
-        showToast("Errore durante la migrazione: " + err.message, "info");
-      }
-    }
-  }, [fetchData, showToast]);
-
+  // Set up real-time listeners for the circle
   useEffect(() => {
-    const checkMembership = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setLoading(false);
-        return;
-      }
+    if (!circleId || !auth.currentUser) {
+      setMembers([]);
+      setPosts([]);
+      setEvents([]);
+      setMedications([]);
+      setDocuments([]);
+      setMeals([]);
+      setDietaryNotes("");
+      return;
+    }
 
-      const { data: membership, error } = await supabase
-        .from('circle_members')
-        .select('circle_id, display_name, role, circles(recipient_name, invite_code)')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
+    const unsubscribers: (() => void)[] = [];
 
-      if (membership && !error) {
-        const circleData = membership.circles as any;
-        setCircleId(membership.circle_id);
-        setProfile({
-          recipientName: circleData.recipient_name,
-          userName: membership.display_name,
-          userRole: membership.role,
-          inviteCode: circleData.invite_code,
-          isOnboarded: true
-        });
-        setCurrentView('app');
-        fetchData(membership.circle_id);
-        migrateLocalStorage(membership.circle_id);
-      } else {
-        setLoading(false);
-        if (currentView !== 'login') setCurrentView('login');
+    // Members
+    const membersQuery = query(collection(db, 'circles', circleId, 'members'));
+    unsubscribers.push(onSnapshot(membersQuery, (snapshot) => {
+      const mData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().displayName,
+        role: doc.data().role,
+        avatar: doc.data().displayName?.substring(0, 2).toUpperCase() || 'U',
+        online: true
+      }));
+      setMembers(mData);
+    }, (err) => logFirestoreError(err, OperationType.LIST, `circles/${circleId}/members`)));
+
+    // Posts
+    const postsQuery = query(collection(db, 'circles', circleId, 'posts'), orderBy('timestamp', 'desc'), limit(50));
+    unsubscribers.push(onSnapshot(postsQuery, (snapshot) => {
+      const pData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          timestamp: data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString() : new Date().toLocaleString()
+        } as Post;
+      });
+      setPosts(pData);
+    }, (err) => logFirestoreError(err, OperationType.LIST, `circles/${circleId}/posts`)));
+
+    // Events
+    const eventsQuery = query(collection(db, 'circles', circleId, 'events'), orderBy('date', 'asc'));
+    unsubscribers.push(onSnapshot(eventsQuery, (snapshot) => {
+      const eData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CareEvent));
+      setEvents(eData);
+    }, (err) => logFirestoreError(err, OperationType.LIST, `circles/${circleId}/events`)));
+
+    // Medications
+    const medsQuery = query(collection(db, 'circles', circleId, 'medications'));
+    unsubscribers.push(onSnapshot(medsQuery, (snapshot) => {
+      const mData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Medication));
+      setMedications(mData);
+    }, (err) => logFirestoreError(err, OperationType.LIST, `circles/${circleId}/medications`)));
+
+    // Documents
+    const docsQuery = query(collection(db, 'circles', circleId, 'documents'), orderBy('createdAt', 'desc'));
+    unsubscribers.push(onSnapshot(docsQuery, (snapshot) => {
+      const dData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CareDocument));
+      setDocuments(dData);
+    }, (err) => logFirestoreError(err, OperationType.LIST, `circles/${circleId}/documents`)));
+
+    // Meals
+    const mealsQuery = query(collection(db, 'circles', circleId, 'meals'));
+    unsubscribers.push(onSnapshot(mealsQuery, (snapshot) => {
+      const mData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MealPlan));
+      setMeals(mData);
+    }, (err) => logFirestoreError(err, OperationType.LIST, `circles/${circleId}/meals`)));
+
+    // Dietary Notes
+    const dietRef = doc(db, 'circles', circleId, 'dietary_notes', 'notes');
+    unsubscribers.push(onSnapshot(dietRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setDietaryNotes(docSnap.data().notes);
       }
+    }, (err) => logFirestoreError(err, OperationType.GET, `circles/${circleId}/dietary_notes/notes`)));
+
+    return () => {
+      unsubscribers.forEach(unsub => unsub());
     };
+  }, [circleId]);
 
-    checkMembership();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
-        checkMembership();
-      } else if (event === 'SIGNED_OUT') {
+  // Handle Authentication and Membership check
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
         setProfile(null);
         setCircleId(null);
         setCurrentView('landing');
         setLoading(false);
+        return;
+      }
+
+      // Find which circle this user belongs to
+      try {
+        let savedCircleId = localStorage.getItem('ccc_current_circle_id');
+        
+        if (!savedCircleId) {
+          const userCircleSnap = await getDoc(doc(db, 'user_circles', user.uid));
+          if (userCircleSnap.exists()) {
+            savedCircleId = userCircleSnap.data().circleId;
+          }
+        }
+
+        if (savedCircleId) {
+          const memberRef = doc(db, 'circles', savedCircleId, 'members', user.uid);
+          const memberSnap = await getDoc(memberRef);
+          if (memberSnap.exists()) {
+            const circleRef = doc(db, 'circles', savedCircleId);
+            const circleSnap = await getDoc(circleRef);
+            if (circleSnap.exists()) {
+              const circleData = circleSnap.data();
+              const memberData = memberSnap.data();
+              
+              localStorage.setItem('ccc_current_circle_id', savedCircleId);
+              setCircleId(savedCircleId);
+              setProfile({
+                recipientName: circleData.recipientName,
+                userName: memberData.displayName,
+                userRole: memberData.role,
+                inviteCode: circleData.inviteCode,
+                isOnboarded: true
+              });
+              setCurrentView('app');
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
+        setLoading(false);
+        setCurrentView('login');
+      } catch (err) {
+        console.error("Error checking membership:", err);
+        setLoading(false);
+        setCurrentView('login');
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [fetchData, migrateLocalStorage]);
-
-  // Firebase Auth sync and token registration helper
-  useEffect(() => {
-    const unsub = onAuthStateChanged(fbAuth, (fbUser) => {
-      if (!fbUser && currentView === 'app') {
-        signInAnonymously(fbAuth).catch(err => console.error("Firebase auth error:", err));
-      }
-    });
-    return () => unsub();
-  }, [currentView]);
+    return () => unsubscribe();
+  }, []);
 
   const registerPushToken = async (token: string) => {
-    const fbUser = fbAuth.currentUser;
-    if (!fbUser) {
-      await signInAnonymously(fbAuth);
-    }
-    
-    const user = (await supabase.auth.getUser()).data.user;
+    const user = auth.currentUser;
     if (!user) return;
 
+    const path = `push_tokens/${user.uid}`;
     try {
-      await setDoc(doc(fbDb, 'push_tokens', user.id), {
-        userId: user.id,
+      await setDoc(doc(db, 'push_tokens', user.uid), {
+        userId: user.uid,
         token: token,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       }, { merge: true });
       showToast("Notifiche attivate con successo!");
     } catch (err: any) {
-      console.error("Error saving push token:", err);
-      showToast("Errore nell'attivazione delle notifiche.", "info");
+      handleFirestoreError(err, OperationType.WRITE, path);
     }
   };
 
@@ -296,72 +307,175 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const toggleTheme = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
 
   const logoutCircle = async () => {
-    await supabase.auth.signOut();
+    await auth.signOut();
+    localStorage.removeItem('ccc_current_circle_id');
   };
 
   const createCircle = async (recipientName: string, userName: string, userRole: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
     try {
       const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const { data: circle, error: circleError } = await supabase.from('circles').insert([{ recipient_name: recipientName, invite_code: inviteCode }]).select().single();
-      if (circleError) throw circleError;
-      const { error: memberError } = await supabase.from('circle_members').insert([{ circle_id: circle.id, user_id: (await supabase.auth.getUser()).data.user?.id, display_name: userName, role: userRole }]);
-      if (memberError) throw memberError;
       
-      setCircleId(circle.id);
+      const batch = writeBatch(db);
+      
+      // 1. Create Circle
+      const circleRef = doc(collection(db, 'circles'));
+      batch.set(circleRef, {
+        recipientName,
+        inviteCode,
+        createdBy: user.uid,
+        createdAt: serverTimestamp()
+      });
+
+      // 2. Add Member
+      const memberRef = doc(db, 'circles', circleRef.id, 'members', user.uid);
+      batch.set(memberRef, {
+        displayName: userName,
+        role: userRole,
+        userId: user.uid,
+        circleId: circleRef.id,
+        inviteCode,
+        joinedAt: serverTimestamp()
+      });
+
+      // 3. Create Invite Code Mapping
+      const inviteRef = doc(db, 'invite_codes', inviteCode);
+      batch.set(inviteRef, {
+        circleId: circleRef.id,
+        recipientName
+      });
+
+      // 4. Create Meals
+      const days = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
+      const dayNames = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+      
+      days.forEach((dayId, index) => {
+        const mealRef = doc(db, 'circles', circleRef.id, 'meals', dayId);
+        batch.set(mealRef, {
+          day: dayNames[index],
+          lunch: { dish: '', provider: '', status: 'pianificato' },
+          dinner: { dish: '', provider: '', status: 'pianificato' },
+          circleId: circleRef.id,
+          createdBy: user.uid,
+          order: index
+        });
+      });
+
+      // 5. Update User Circle Mapping
+      batch.set(doc(db, 'user_circles', user.uid), { circleId: circleRef.id });
+
+      await batch.commit();
+      
+      localStorage.setItem('ccc_current_circle_id', circleRef.id);
+      setCircleId(circleRef.id);
       setProfile({ recipientName, userName, userRole, inviteCode, isOnboarded: true });
       setCurrentView('app');
       showToast(`Cerchio creato con successo!`);
-      fetchData(circle.id);
     } catch (error: any) {
-      showToast(error.message, 'info');
+      handleFirestoreError(error, OperationType.WRITE, 'circles');
     }
   };
 
   const joinCircle = async (code: string, userName: string, userRole: string): Promise<boolean> => {
-    try {
-      const { error: rpcError } = await supabase.rpc('join_circle', { code: code.toUpperCase(), display_name: userName, user_role: userRole });
-      if (rpcError) throw rpcError;
-      const { data: circle, error: circleError } = await supabase.from('circles').select('id, recipient_name, invite_code').eq('invite_code', code.toUpperCase()).single();
-      if (circleError) throw circleError;
+    const user = auth.currentUser;
+    if (!user) return false;
 
-      setCircleId(circle.id);
-      setProfile({ recipientName: circle.recipient_name, userName, userRole, inviteCode: circle.invite_code, isOnboarded: true });
+    try {
+      const inviteCode = code.toUpperCase();
+      const inviteRef = doc(db, 'invite_codes', inviteCode);
+      const inviteSnap = await getDoc(inviteRef);
+      
+      if (!inviteSnap.exists()) {
+        showToast('Codice invito non valido', 'info');
+        return false;
+      }
+
+      const { circleId: targetCircleId } = inviteSnap.data();
+
+      // Add as member
+      await setDoc(doc(db, 'circles', targetCircleId, 'members', user.uid), {
+        displayName: userName,
+        role: userRole,
+        userId: user.uid,
+        circleId: targetCircleId,
+        inviteCode,
+        joinedAt: serverTimestamp()
+      });
+
+      // Update User Circle Mapping
+      await setDoc(doc(db, 'user_circles', user.uid), { circleId: targetCircleId });
+
+      localStorage.setItem('ccc_current_circle_id', targetCircleId);
+      setCircleId(targetCircleId);
+      
+      // We don't have circle data here easily without getDoc(circles/cid), 
+      // but AppContext will load it from onSnapshot or we could fetch it.
+      // For simplicity, assume profile will be set via another mechanism or fetch it here.
+      const circleSnap = await getDoc(doc(db, 'circles', targetCircleId));
+      if (circleSnap.exists()) {
+        setProfile({ 
+          recipientName: circleSnap.data().recipientName, 
+          userName, 
+          userRole, 
+          inviteCode, 
+          isOnboarded: true 
+        });
+      }
+      
       setCurrentView('app');
       showToast(`Ti sei unito al cerchio!`);
-      fetchData(circle.id);
       return true;
     } catch (error: any) {
-      showToast(error.message || 'Errore durante l\'accesso', 'info');
+      handleFirestoreError(error, OperationType.WRITE, 'join');
       return false;
     }
   };
 
   const updateProfile = async (recipientName: string) => {
     if (!circleId) return;
-    const { error } = await supabase.from('circles').update({ recipient_name: recipientName }).eq('id', circleId);
-    if (error) showToast(error.message, 'info');
-    else {
+    try {
+      await updateDoc(doc(db, 'circles', circleId), { recipientName });
       setProfile(p => p ? { ...p, recipientName } : null);
       showToast('Profilo aggiornato');
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.UPDATE, `circles/${circleId}`);
     }
   };
 
-  const addPost = async (text: string, type: PostType, completed?: boolean, imageUrl?: string) => {
-    if (!circleId) return;
-    const { error } = await supabase.from('posts').insert([{ 
-      circle_id: circleId, 
-      author_name: profile?.userName, 
-      type, text, completed, image_url: imageUrl 
-    }]);
-    if (error) showToast(error.message, 'info');
-    else fetchData(circleId);
+  const addPost = async (text: string, type: PostType, completed: boolean = false, imageUrl?: string) => {
+    if (!circleId || !auth.currentUser) return;
+    const path = `circles/${circleId}/posts`;
+    try {
+      await addDoc(collection(db, 'circles', circleId, 'posts'), {
+        circleId,
+        authorName: profile?.userName || 'Utente',
+        authorAvatar: '', // Optional avatar logic
+        type,
+        text,
+        completed,
+        imageUrl: imageUrl || '',
+        timestamp: serverTimestamp(),
+        createdBy: auth.currentUser.uid
+      });
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.CREATE, path);
+    }
   };
 
   const addEvent = async (eventData: Omit<CareEvent, 'id'>) => {
-    if (!circleId) return;
-    const { error } = await supabase.from('events').insert([{ ...eventData, circle_id: circleId }]);
-    if (error) showToast(error.message, 'info');
-    else fetchData(circleId);
+    if (!circleId || !auth.currentUser) return;
+    const path = `circles/${circleId}/events`;
+    try {
+      await addDoc(collection(db, 'circles', circleId, 'events'), {
+        ...eventData,
+        circleId,
+        createdBy: auth.currentUser.uid
+      });
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.CREATE, path);
+    }
   };
 
   const toggleEventStatus = async (eventId: string) => {
@@ -369,16 +483,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const event = events.find(e => e.id === eventId);
     if (!event) return;
     const nextStatus = event.status === 'completato' ? 'attesa' : 'completato';
-    const { error } = await supabase.from('events').update({ status: nextStatus }).eq('id', eventId);
-    if (error) showToast(error.message, 'info');
-    else fetchData(circleId);
+    try {
+      await updateDoc(doc(db, 'circles', circleId, 'events', eventId), { status: nextStatus });
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.UPDATE, `circles/${circleId}/events/${eventId}`);
+    }
   };
 
   const addMedication = async (medData: Omit<Medication, 'id' | 'checks'>) => {
-    if (!circleId) return;
-    const { error } = await supabase.from('medications').insert([{ ...medData, circle_id: circleId }]);
-    if (error) showToast(error.message, 'info');
-    else fetchData(circleId);
+    if (!circleId || !auth.currentUser) return;
+    const path = `circles/${circleId}/medications`;
+    try {
+      await addDoc(collection(db, 'circles', circleId, 'medications'), {
+        ...medData,
+        checks: {},
+        circleId,
+        createdBy: auth.currentUser.uid
+      });
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.CREATE, path);
+    }
   };
 
   const toggleMedicationDose = async (medId: string, timeSlot: string, dateStr: string = new Date().toISOString().split('T')[0]) => {
@@ -387,19 +511,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!med) return;
     const key = `${dateStr}_${timeSlot}`;
     const nextChecks = { ...med.checks, [key]: !med.checks[key] };
-    const { error } = await supabase.from('medications').update({ checks: nextChecks }).eq('id', medId);
-    if (error) showToast(error.message, 'info');
-    else {
-      if (nextChecks[key]) addPost(`Ha preso la dose delle ore ${timeSlot}.`, 'pill', true);
-      fetchData(circleId);
+    try {
+      await updateDoc(doc(db, 'circles', circleId, 'medications', medId), { checks: nextChecks });
+      if (nextChecks[key]) {
+        addPost(`Ha preso la dose delle ore ${timeSlot}.`, 'pill', true);
+      }
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.UPDATE, `circles/${circleId}/medications/${medId}`);
     }
   };
 
-  const addDocument = async (docData: Omit<CareDocument, 'id'>) => {
-    if (!circleId) return;
-    const { error } = await supabase.from('documents').insert([{ ...docData, circle_id: circleId }]);
-    if (error) showToast(error.message, 'info');
-    else fetchData(circleId);
+  const addDocument = async (docData: Omit<CareDocument, 'id' | 'createdAt'>) => {
+    if (!circleId || !auth.currentUser) return;
+    const path = `circles/${circleId}/documents`;
+    try {
+      await addDoc(collection(db, 'circles', circleId, 'documents'), {
+        ...docData,
+        createdAt: serverTimestamp(),
+        circleId,
+        createdBy: auth.currentUser.uid
+      });
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.CREATE, path);
+    }
   };
 
   const addMember = async (name: string, role: string) => {
@@ -408,23 +542,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const removeMember = async (id: string) => {
     if (!circleId) return;
-    const { error } = await supabase.from('circle_members').delete().eq('circle_id', circleId).eq('user_id', id);
-    if (error) showToast(error.message, 'info');
-    else fetchData(circleId);
+    try {
+      await deleteDoc(doc(db, 'circles', circleId, 'members', id));
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.DELETE, `circles/${circleId}/members/${id}`);
+    }
   };
 
   const updateMeal = async (id: string, lunch: MealItem, dinner: MealItem) => {
     if (!circleId) return;
-    const { error } = await supabase.from('meals').update({ lunch, dinner }).eq('id', id);
-    if (error) showToast(error.message, 'info');
-    else fetchData(circleId);
+    try {
+      await setDoc(doc(db, 'circles', circleId, 'meals', id), { lunch, dinner }, { merge: true });
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.UPDATE, `circles/${circleId}/meals/${id}`);
+    }
   };
 
   const updateDietaryNotes = async (notes: string) => {
-    if (!circleId) return;
-    const { error } = await supabase.from('dietary_notes').upsert({ circle_id: circleId, notes });
-    if (error) showToast(error.message, 'info');
-    else fetchData(circleId);
+    if (!circleId || !auth.currentUser) return;
+    try {
+      await setDoc(doc(db, 'circles', circleId, 'dietary_notes', 'notes'), { 
+        notes,
+        circleId,
+        createdBy: auth.currentUser.uid
+      });
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.WRITE, `circles/${circleId}/dietary_notes/notes`);
+    }
   };
 
   return (

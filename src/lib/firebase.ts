@@ -1,23 +1,44 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
-export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
+
+let messagingInstance: any = null;
+let messagingInitialized = false;
+
+export const getMessagingInstance = async () => {
+  if (messagingInitialized) return messagingInstance;
+  
+  try {
+    if (await isSupported()) {
+      messagingInstance = getMessaging(app);
+    }
+  } catch (error) {
+    console.error('Messaging not supported:', error);
+  }
+  
+  messagingInitialized = true;
+  return messagingInstance;
+};
 
 export const requestNotificationPermission = async () => {
+  const messaging = await getMessagingInstance();
   if (!messaging) return null;
   
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      const token = await getToken(messaging, {
-        vapidKey: 'BOnX0R6q6h3_eZ9_f0_eR_rR_eS_sI_vE_vI_cE_pA_rA_m_e_t_e_r' // This is a placeholder, usually not strictly required if project is linked
-      });
+      const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+      if (!vapidKey) {
+        console.warn('VITE_FIREBASE_VAPID_KEY not configured');
+        return null;
+      }
+      const token = await getToken(messaging, { vapidKey });
       return token;
     }
   } catch (error) {
@@ -26,19 +47,25 @@ export const requestNotificationPermission = async () => {
   return null;
 };
 
-export const onMessageListener = () =>
-  new Promise((resolve) => {
-    if (!messaging) return;
+export const onMessageListener = async () => {
+  const messaging = await getMessagingInstance();
+  if (!messaging) return null;
+  
+  return new Promise((resolve) => {
     onMessage(messaging, (payload) => {
       resolve(payload);
     });
   });
+};
 
 export const testSendNotification = async (token: string, title: string, body: string) => {
   try {
     const response = await fetch('/api/send-notification', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`
+      },
       body: JSON.stringify({ token, title, body })
     });
     return await response.json();

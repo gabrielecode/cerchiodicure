@@ -35,7 +35,8 @@ export interface Medication {
 export interface CareDocument {
   id: string;
   title: string;
-  date: string;
+  date?: string;
+  createdAt?: any;
   author: string;
   fileSize: string;
   fileType: string;

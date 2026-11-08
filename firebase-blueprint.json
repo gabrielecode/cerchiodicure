@@ -1,76 +1,155 @@
 {
   "entities": {
+    "Circle": {
+      "title": "Circle",
+      "description": "A care circle for a specific recipient.",
+      "type": "object",
+      "properties": {
+        "recipientName": { "type": "string", "description": "The name of the person being cared for." },
+        "inviteCode": { "type": "string", "description": "A 6-character unique code to join the circle." },
+        "createdBy": { "type": "string", "description": "The UID of the circle creator." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recipientName", "inviteCode", "createdBy", "createdAt"]
+    },
+    "Member": {
+      "title": "Member",
+      "description": "A member of a care circle.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "role": { "type": "string" },
+        "userId": { "type": "string" },
+        "circleId": { "type": "string" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["displayName", "role", "userId", "circleId", "joinedAt"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "A timeline entry.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "type": { "type": "string", "enum": ["pill", "calendar", "note", "food", "photo"] },
+        "authorName": { "type": "string" },
+        "authorAvatar": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "completed": { "type": "boolean" },
+        "imageUrl": { "type": "string" },
+        "circleId": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["text", "type", "authorName", "timestamp", "circleId", "createdBy"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "A calendar event.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "memberName": { "type": "string" },
+        "memberAvatar": { "type": "string" },
+        "type": { "type": "string", "enum": ["turno", "appuntamento"] },
+        "status": { "type": "string", "enum": ["attesa", "completato"] },
+        "notes": { "type": "string" },
+        "circleId": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["title", "date", "time", "memberName", "type", "status", "circleId", "createdBy"]
+    },
+    "Medication": {
+      "title": "Medication",
+      "description": "A medication to be administered.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "dosage": { "type": "string" },
+        "times": { "type": "array", "items": { "type": "string" } },
+        "responsible": { "type": "string" },
+        "checks": { "type": "object", "description": "Map of date_time to completion status" },
+        "circleId": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["name", "dosage", "times", "responsible", "circleId", "createdBy"]
+    },
+    "Document": {
+      "title": "Document",
+      "description": "A stored document.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "author": { "type": "string" },
+        "fileSize": { "type": "string" },
+        "fileType": { "type": "string" },
+        "circleId": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["title", "date", "author", "fileSize", "fileType", "circleId", "createdBy"]
+    },
+    "MealPlan": {
+      "title": "Meal Plan",
+      "description": "Meals for a specific day.",
+      "type": "object",
+      "properties": {
+        "day": { "type": "string" },
+        "lunch": { "type": "object" },
+        "dinner": { "type": "object" },
+        "circleId": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["day", "lunch", "dinner", "circleId", "createdBy"]
+    },
+    "DietaryNote": {
+      "title": "Dietary Note",
+      "description": "General dietary notes for the circle.",
+      "type": "object",
+      "properties": {
+        "notes": { "type": "string" },
+        "circleId": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["notes", "circleId", "createdBy"]
+    },
     "PushToken": {
       "title": "Push Token",
       "description": "Stores FCM push registration tokens for users.",
       "type": "object",
       "properties": {
-        "userId": {
-          "type": "string",
-          "description": "The user ID (Supabase UID) associated with this token."
-        },
-        "token": {
-          "type": "string",
-          "description": "The FCM registration token."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the token was registered."
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the token was last updated."
-        }
+        "userId": { "type": "string" },
+        "token": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "userId",
-        "token",
-        "createdAt",
-        "updatedAt"
-      ]
+      "required": ["userId", "token", "createdAt", "updatedAt"]
     },
     "Message": {
       "title": "Message",
       "description": "A chat message within a circle.",
       "type": "object",
       "properties": {
-        "text": {
-          "type": "string",
-          "description": "The content of the message.",
-          "maxLength": 1000
-        },
-        "senderId": {
-          "type": "string",
-          "description": "The ID of the user who sent the message."
-        },
-        "senderName": {
-          "type": "string",
-          "description": "The name of the user who sent the message."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the message was sent."
-        }
+        "text": { "type": "string", "maxLength": 1000 },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "text",
-        "senderId",
-        "senderName",
-        "createdAt"
-      ]
+      "required": ["text", "senderId", "senderName", "createdAt"]
     }
   },
   "firestore": {
-    "/push_tokens/{tokenId}": {
-      "schema": "PushToken",
-      "description": "Collection of FCM push tokens indexed by a unique ID."
-    },
-    "/circles/{circleId}/messages/{messageId}": {
-      "schema": "Message",
-      "description": "Collection of messages within a specific circle."
-    }
+    "/circles/{circleId}": { "schema": "Circle", "description": "The main circle document." },
+    "/circles/{circleId}/members/{memberId}": { "schema": "Member", "description": "Members of the circle." },
+    "/circles/{circleId}/posts/{postId}": { "schema": "Post", "description": "Timeline posts." },
+    "/circles/{circleId}/events/{eventId}": { "schema": "Event", "description": "Calendar events." },
+    "/circles/{circleId}/medications/{medicationId}": { "schema": "Medication", "description": "Medications list." },
+    "/circles/{circleId}/documents/{documentId}": { "schema": "Document", "description": "Uploaded documents metadata." },
+    "/circles/{circleId}/meals/{mealId}": { "schema": "MealPlan", "description": "Weekly meal plan." },
+    "/circles/{circleId}/dietary_notes/notes": { "schema": "DietaryNote", "description": "Dietary notes for the circle." },
+    "/circles/{circleId}/messages/{messageId}": { "schema": "Message", "description": "Chat messages." },
+    "/push_tokens/{tokenId}": { "schema": "PushToken", "description": "Push tokens." },
+    "/invite_codes/{code}": { "schema": { "type": "object", "properties": { "circleId": { "type": "string" } } }, "description": "Mapping of invite codes to circle IDs." }
   }
 }

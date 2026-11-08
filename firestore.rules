@@ -15,44 +15,109 @@ service cloud.firestore {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
-    function isValidPushToken(data) {
-      return data.keys().hasAll(['userId', 'token', 'createdAt', 'updatedAt']) &&
-             data.keys().hasOnly(['userId', 'token', 'createdAt', 'updatedAt']) &&
-             data.userId is string && data.userId.size() <= 128 &&
-             data.token is string && data.token.size() <= 512 &&
-             data.createdAt is timestamp &&
-             data.updatedAt is timestamp;
+    function isMember(circleId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
     }
 
-    function isValidMessage(data) {
-      return data.keys().hasAll(['text', 'senderId', 'senderName', 'createdAt']) &&
-             data.keys().hasOnly(['text', 'senderId', 'senderName', 'createdAt']) &&
-             data.text is string && data.text.size() <= 1000 &&
-             data.senderId is string && data.senderName is string &&
-             data.createdAt is timestamp;
+    function incoming() {
+      return request.resource.data;
     }
 
+    function existing() {
+      return resource.data;
+    }
+
+    // Circles
+    match /circles/{circleId} {
+      function isValidCircle(data) {
+        return data.recipientName is string && data.recipientName.size() > 0 && data.recipientName.size() <= 200 &&
+               data.inviteCode is string && data.inviteCode.size() == 6 &&
+               data.createdBy == request.auth.uid &&
+               data.createdAt == request.time;
+      }
+
+      allow get: if isSignedIn() && (existing().createdBy == request.auth.uid || isMember(circleId));
+      allow create: if isSignedIn() && isValidCircle(incoming());
+      allow update: if isMember(circleId) && incoming().diff(existing()).affectedKeys().hasOnly(['recipientName']);
+
+      // Members subcollection
+      match /members/{memberId} {
+        function isValidMember(data) {
+          return data.displayName is string && data.displayName.size() > 0 &&
+                 data.role is string &&
+                 data.userId == memberId &&
+                 data.circleId == circleId &&
+                 data.inviteCode is string &&
+                 (
+                   get(/databases/$(database)/documents/invite_codes/$(data.inviteCode)).data.circleId == circleId ||
+                   (request.auth.uid == memberId && get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid)
+                 ) &&
+                 data.joinedAt == request.time;
+        }
+        allow read: if isMember(circleId);
+        allow create: if isSignedIn() && isValidMember(incoming()); 
+        allow delete: if isMember(circleId) && (request.auth.uid == memberId || get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid);
+      }
+
+      // Posts subcollection
+      match /posts/{postId} {
+        function isValidPost(data) {
+          return data.text is string && data.type in ['pill', 'calendar', 'note', 'food', 'photo'] &&
+                 data.authorName is string && data.timestamp == request.time &&
+                 data.circleId == circleId && data.createdBy == request.auth.uid;
+        }
+        allow read: if isMember(circleId);
+        allow create: if isMember(circleId) && isValidPost(incoming());
+        allow update: if isMember(circleId) && incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'text', 'type']) && (incoming().createdBy == request.auth.uid || existing().type == 'pill');
+        allow delete: if isMember(circleId) && existing().createdBy == request.auth.uid;
+      }
+
+      // Events subcollection
+      match /events/{eventId} {
+        allow read: if isMember(circleId);
+        allow write: if isMember(circleId);
+      }
+
+      // Medications subcollection
+      match /medications/{medicationId} {
+        allow read: if isMember(circleId);
+        allow write: if isMember(circleId);
+      }
+
+      // Documents subcollection
+      match /documents/{documentId} {
+        allow read: if isMember(circleId);
+        allow write: if isMember(circleId);
+      }
+
+      // Meals subcollection
+      match /meals/{mealId} {
+        allow read: if isMember(circleId);
+        allow write: if isMember(circleId);
+      }
+
+      // Dietary notes
+      match /dietary_notes/notes {
+        allow read: if isMember(circleId);
+        allow write: if isMember(circleId);
+      }
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read: if isMember(circleId);
+        allow create: if isMember(circleId) && incoming().senderId == request.auth.uid;
+      }
+    }
+
+    // Invite codes (Public-ish but read-only for verification)
+    match /invite_codes/{code} {
+      allow get: if isSignedIn();
+      allow create: if isSignedIn(); // When creating a circle
+    }
+
+    // Push tokens
     match /push_tokens/{tokenId} {
-      allow get, list, delete: if isSignedIn();
-      allow create: if isSignedIn() && 
-                      isValidId(tokenId) && 
-                      isValidPushToken(request.resource.data) &&
-                      request.resource.data.createdAt == request.time &&
-                      request.resource.data.updatedAt == request.time;
-      allow update: if isSignedIn() && 
-                      isValidPushToken(request.resource.data) &&
-                      request.resource.data.createdAt == resource.data.createdAt &&
-                      request.resource.data.updatedAt == request.time &&
-                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['token', 'updatedAt']);
-    }
-
-    match /circles/{circleId}/messages/{messageId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && 
-                      isValidId(circleId) && 
-                      isValidId(messageId) && 
-                      isValidMessage(request.resource.data) &&
-                      request.resource.data.createdAt == request.time;
+      allow read, write: if isSignedIn() && (tokenId == request.auth.uid || incoming().userId == request.auth.uid);
     }
   }
 }

@@ -144,8 +144,35 @@ export const MealsTab: React.FC = () => {
             <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Sincronizzazione H24</span>
           </div>
 
+        {meals.length === 0 ? (
+          <div className="flex justify-center mt-12">
+            <button
+              onClick={async () => {
+                const batch = writeBatch(db);
+                const days = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
+                const dayNames = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+                days.forEach((dayId, index) => {
+                  const mealRef = doc(db, 'circles', circleId!, 'meals', dayId);
+                  batch.set(mealRef, {
+                    day: dayNames[index],
+                    lunch: { dish: '', provider: '', status: 'pianificato' },
+                    dinner: { dish: '', provider: '', status: 'pianificato' },
+                    circleId: circleId!,
+                    createdBy: auth.currentUser?.uid,
+                    order: index
+                  });
+                });
+                await batch.commit();
+                showToast('Piano settimanale creato!');
+              }}
+              className="px-6 py-3 bg-emerald-700 text-white font-black uppercase tracking-widest rounded-lg shadow-md"
+            >
+              Crea piano settimanale
+            </button>
+          </div>
+        ) : (
           <div className="grid gap-4">
-            {meals.map((meal) => (
+            {[...meals].sort((a, b) => (a as any).order - (b as any).order).map((meal) => (
               <div
                 key={meal.id}
                 className="bg-white dark:bg-slate-900 rounded-lg p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-stretch gap-6 transition-all hover:border-emerald-200 dark:hover:border-emerald-700"
@@ -211,13 +238,13 @@ export const MealsTab: React.FC = () => {
                         </div>
                       ) : (
                         <div
-                          onClick={() => startEditingMeal(meal.id, editSlot, editSlot === 'lunch' ? meal.lunch.dish : meal.dinner.dish, editSlot === 'lunch' ? meal.lunch.provider : meal.dinner.provider)}
+                          onClick={() => startEditingMeal(meal.id, 'lunch', meal.lunch.dish, meal.lunch.provider)}
                           className="cursor-pointer group"
                         >
                           <p className="text-sm font-black text-slate-800 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors leading-tight mb-2">
-                            {editSlot === 'lunch' ? meal.lunch.dish : meal.dinner.dish}
+                            {meal.lunch.dish || 'Pianifica pranzo...'}
                           </p>
-                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">Provider: {editSlot === 'lunch' ? meal.lunch.provider : meal.dinner.provider}</p>
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">Provider: {meal.lunch.provider || '-'}</p>
                         </div>
                       )}
                     </div>
@@ -279,9 +306,9 @@ export const MealsTab: React.FC = () => {
                           className="cursor-pointer group"
                         >
                           <p className="text-sm font-black text-slate-800 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors leading-tight mb-2">
-                            {meal.dinner.dish}
+                            {meal.dinner.dish || 'Pianifica cena...'}
                           </p>
-                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">Provider: {meal.dinner.provider}</p>
+                          <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">Provider: {meal.dinner.provider || '-'}</p>
                         </div>
                       )}
                     </div>
@@ -290,6 +317,7 @@ export const MealsTab: React.FC = () => {
               </div>
             ))}
           </div>
+        )}
         </div>
       </div>
     </div>

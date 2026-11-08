@@ -37,7 +37,7 @@ const MainContent: React.FC = () => {
 
   const { session, loading: authLoading } = useAuth();
 
-  if (authLoading) {
+  if (authLoading || appLoading) {
     return <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
       <div className="animate-pulse flex flex-col items-center gap-4">
         <HeartHandshake className="w-12 h-12 text-emerald-700 opacity-20" />

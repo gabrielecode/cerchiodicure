@@ -217,11 +217,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
                   const { requestNotificationPermission } = await import('../lib/firebase');
                   const token = await requestNotificationPermission();
                   if (token) {
-                    const { useApp } = await import('../context/AppContext');
-                    // We already have useApp at top level
                     registerPushToken(token);
+                    showToast("Notifiche attivate con successo!");
                   } else {
-                    showToast("Permesso notifiche negato o non supportato.", "info");
+                    if (!import.meta.env.VITE_FIREBASE_VAPID_KEY) {
+                      showToast("Notifiche non configurate", "info");
+                    } else {
+                      showToast("Notifiche non supportate su questo dispositivo", "info");
+                    }
                   }
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"

@@ -5,10 +5,9 @@ import { useAuth } from '../context/AuthContext';
 
 export const Login: React.FC = () => {
   const { createCircle, joinCircle, setCurrentView, showToast, theme, toggleTheme } = useApp();
-  const { signInWithOtp, signInWithProvider, verifyOtp, session } = useAuth();
+  const { signInWithOtp, signInWithProvider, verifyOtp, user } = useAuth();
   const [authStep, setAuthStep] = useState<'email' | 'otp' | 'profile'>('email');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'create' | 'join'>('create');
   const [userName, setUserName] = useState('');
@@ -30,19 +29,7 @@ export const Login: React.FC = () => {
     }
   };
 
-  const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (otp.length !== 6) return;
-    setLoading(true);
-    const { error } = await verifyOtp(email, otp);
-    setLoading(false);
-    if (error) {
-      showToast(error.message, 'info');
-    } else {
-      setAuthStep('profile');
-      showToast('Email verificata con successo');
-    }
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,41 +39,48 @@ export const Login: React.FC = () => {
     }
 
     setLoading(true);
-    if (mode === 'join') {
-      if (!inviteCode.trim()) {
-        showToast('Inserire codice di accesso al cerchio', 'info');
-        setLoading(false);
-        return;
-      }
-      const success = await joinCircle(inviteCode.trim(), userName.trim(), userRole);
-      if (success) {
+    try {
+      if (mode === 'join') {
+        if (!inviteCode.trim()) {
+          showToast('Inserire codice di accesso al cerchio', 'info');
+          setLoading(false);
+          return;
+        }
+        const success = await joinCircle(inviteCode.trim(), userName.trim(), userRole);
+        if (success) {
+          setCurrentView('app');
+        } else {
+          showToast('Operazione non riuscita, riprova', 'info');
+        }
+      } else {
+        if (!recipientName.trim()) {
+          showToast('Inserire nome del destinatario dell\'assistenza', 'info');
+          setLoading(false);
+          return;
+        }
+        await createCircle(recipientName.trim(), userName.trim(), userRole);
         setCurrentView('app');
       }
-    } else {
-      if (!recipientName.trim()) {
-        showToast('Inserire nome del destinatario dell\'assistenza', 'info');
-        setLoading(false);
-        return;
-      }
-      await createCircle(recipientName.trim(), userName.trim(), userRole);
-      setCurrentView('app');
+    } catch (err) {
+      showToast('Operazione non riuscita, riprova', 'info');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // If already has session but in 'email' or 'otp' step, move to profile setup
   React.useEffect(() => {
-    if (session) {
+    if (user) {
       if (authStep === 'email' || authStep === 'otp') {
         setAuthStep('profile');
       }
       // Pre-populate name from social metadata if available and field is empty
-      const fullName = session.user?.user_metadata?.full_name;
+      const fullName = user?.displayName;
       if (fullName && !userName) {
         setUserName(fullName);
       }
     }
-  }, [session, authStep, userName]);
+  }, [user, authStep, userName]);
 
   if (authStep === 'email') {
     return (
@@ -174,51 +168,30 @@ export const Login: React.FC = () => {
   if (authStep === 'otp') {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-between p-4 sm:p-6 lg:p-8 font-sans text-slate-700 dark:text-slate-300 transition-colors duration-300">
-        <div className="max-w-md mx-auto w-full pt-4 flex items-center justify-between">
-          <button
-            onClick={() => setAuthStep('email')}
-            className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors bg-white dark:bg-slate-900 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm"
-          >
-            <ArrowLeft className="w-3 h-3" />
-            <span>Indietro</span>
-          </button>
-        </div>
-
         <div className="my-auto py-8 max-w-md w-full mx-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-lg p-10 shadow-xl border border-slate-200 dark:border-slate-800">
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-emerald-700 text-white mb-6 shadow-md">
-                <KeyRound className="w-7 h-7" />
-              </div>
-              <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Verifica Identità</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-2">Inserire il codice a 6 cifre inviato a {email}</p>
+          <div className="bg-white dark:bg-slate-900 rounded-lg p-10 shadow-xl border border-slate-200 dark:border-slate-800 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-emerald-700 text-white mb-6 shadow-md">
+              <KeyRound className="w-7 h-7" />
             </div>
-
-            <form onSubmit={handleOtpSubmit} className="space-y-6">
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
-                  Codice di Verifica
-                </label>
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                  placeholder="123456"
-                  maxLength={6}
-                  className="w-full h-12 px-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-center text-2xl font-mono font-bold tracking-[0.5em] focus:outline-none focus:border-emerald-700 dark:focus:border-emerald-500 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 transition-all"
-                  required
-                />
-              </div>
-
+            <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Controlla la tua email</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-4">
+              Ti abbiamo inviato un link di accesso a <strong>{email}</strong>. Aprilo da questo dispositivo per entrare.
+            </p>
+            <div className="space-y-3 mt-8">
               <button
-                type="submit"
-                disabled={loading || otp.length !== 6}
-                className="w-full h-14 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-black uppercase tracking-[0.2em] rounded-lg shadow-md transition-all flex items-center justify-center gap-3 text-sm mt-4"
+                onClick={handleEmailSubmit}
+                disabled={loading}
+                className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 text-white font-black uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-xs"
               >
-                <span>{loading ? 'Verifica...' : 'Convalida Codice'}</span>
-                <ArrowRight className="w-4 h-4" />
+                {loading ? 'Invio...' : 'Reinvia link'}
               </button>
-            </form>
+              <button
+                onClick={() => setAuthStep('email')}
+                className="w-full h-12 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider rounded-lg transition-all text-xs"
+              >
+                Cambia email
+              </button>
+            </div>
           </div>
         </div>
       </div>
